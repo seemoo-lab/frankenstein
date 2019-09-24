@@ -294,7 +294,7 @@ class CmdXmitState(CmdLoadELF):
 
         global CmdXmitStateInitialized
         if not CmdXmitStateInitialized:
-            if self.internalblue.fw.FW_NAME == "CYW27035B1":
+            if self.internalblue.fw.FW_NAME == "CYW20735B1":
                 self.internalblue.patchRom(0x3d32e, "\x70\x47\x70\x47")
             self.internalblue.registerHciCallback(self.debug_hci_callback)
             self.internalblue.registerHciCallback(self.xmit_state_hci_callback)
