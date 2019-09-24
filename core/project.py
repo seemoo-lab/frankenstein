@@ -3,7 +3,7 @@ import os
 from elftools.elf import elffile
 import shutil
 from distutils.spawn import find_executable
-import idb
+#import idb
 import inspect
 
 
@@ -168,36 +168,36 @@ class Project:
                         self.add_symbol(group, name, value)
             self.save()
 
-    def load_idb(self, fname, load_segments=True, load_functions=True):
-        with idb.from_file(fname) as db:
-            api = idb.IDAPython(db)
+    #def load_idb(self, fname, load_segments=True, load_functions=True):
+    #    with idb.from_file(fname) as db:
+    #        api = idb.IDAPython(db)
 
-            #load segments
-            if load_segments:
-                for addr in api.idautils.Segments():
-                    try:
-                        end = api.idaapi.get_segm_end(addr)
-                        size = end-addr
-                        data = api.ida_bytes.get_bytes(addr, size) #seems to fail sometimes
-                        name = api.idaapi.get_segm_name(addr)
-                        name = "%s_%s_0x%x" % (os.path.basename(fname), name, addr)
-                        print name
-                        self.add_segment(group, name, addr, data)
-                    except:
-                        import traceback; traceback.print_exc()
+    #        #load segments
+    #        if load_segments:
+    #            for addr in api.idautils.Segments():
+    #                try:
+    #                    end = api.idaapi.get_segm_end(addr)
+    #                    size = end-addr
+    #                    data = api.ida_bytes.get_bytes(addr, size) #seems to fail sometimes
+    #                    name = api.idaapi.get_segm_name(addr)
+    #                    name = "%s_%s_0x%x" % (os.path.basename(fname), name, addr)
+    #                    print name
+    #                    self.add_segment(group, name, addr, data)
+    #                except:
+    #                    import traceback; traceback.print_exc()
 
-            #extract function names
-            if load_functions:
-                for addr in api.idautils.Functions():
-                    name = api.idc.GetFunctionName(addr)
-                    if self.cfg["config"]["thumb_mode"]:
-                        addr |= 1
+    #        #extract function names
+    #        if load_functions:
+    #            for addr in api.idautils.Functions():
+    #                name = api.idc.GetFunctionName(addr)
+    #                if self.cfg["config"]["thumb_mode"]:
+    #                    addr |= 1
 
-                    self.add_symbol(name, addr)
+    #                self.add_symbol(name, addr)
 
-            #vs vstruct
+    #        #vs vstruct
 
-        self.save()
+    #    self.save()
 
     """
     Config manipulation
