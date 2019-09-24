@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<table>
+  {% for p in projects %}
+    <tr>
+      <td><a href="editProject?projectName={{ p }}">{{ p }} </td>
+    </tr>
+  {% endfor %}
+</table>
+
+{% include 'project/newProject.html' %}
+
+{% endblock %}

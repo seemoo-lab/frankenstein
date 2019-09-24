@@ -1,0 +1,9 @@
+Create Project
+
+<form action="newProject" method="POST">
+  {% csrf_token %}
+  <table>
+    {{ projectNameForm.as_table }}
+  </table>
+  <input type="submit" value="Create">
+</form>

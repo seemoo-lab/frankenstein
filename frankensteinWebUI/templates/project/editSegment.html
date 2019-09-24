@@ -1,0 +1,9 @@
+Edit Segment
+
+<form action="editSegment" method="POST">
+  {% csrf_token %}
+  <table>
+    {{ editSegmentForm.as_table }}
+  </table>
+  <input type="submit" value="Apply">
+</form>

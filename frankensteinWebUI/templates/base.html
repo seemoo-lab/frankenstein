@@ -1,0 +1,147 @@
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvasjs/1.7.0/canvasjs.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/xterm/3.9.1/xterm.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xterm/3.9.1/xterm.min.js"></script>
+<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.4.1.min.js"></script>
+
+
+<h1> Frankenstein Build System </h1>
+<hr>
+
+<style>
+.hoverTable:hover td {background:#e0e0e0}
+
+</style>
+
+<script>
+  //parse and filter json
+  function convertActivityMap(map, start, stop, symbol_lookup) {
+    var dataPoints = []
+    var last_addr = start;
+    dataPoints.push({x:start, y:0});
+    for (var addr in map) {
+      addr = parseInt(addr);
+
+      if (addr < start || addr > stop) continue;
+
+      if (last_addr + 4 < addr) {
+        dataPoints.push({x:last_addr, y:0});
+        dataPoints.push({x:addr, y:0});
+      }
+
+      //add point
+      var point = {x:addr, y: Math.log2(map[addr])+1};
+      if ((addr & 0xfffffffe) in symbol_lookup) {
+        point.indexLabel = symbol_lookup[addr & 0xfffffffe];
+        //point.indexLabelOrientation = "vertical";
+        //point.indexLabelPlacement = "outside";
+      }
+      dataPoints.push(point);
+
+      if (addr < last_addr) {alert(addr);alert(last_addr);}
+      last_addr = addr;
+    }
+    dataPoints.push({x:last_addr, y:0});
+    dataPoints.push({x:stop, y:0});
+
+    return dataPoints;
+  }
+
+
+  function activityMap(container, title, exec_map, read_map, write_map, start, stop, symbol_lookup) {
+    var exec = convertActivityMap(exec_map, start, stop, symbol_lookup);
+    var read = convertActivityMap(read_map, start, stop, symbol_lookup);
+    var write = convertActivityMap(write_map, start, stop, symbol_lookup);
+
+    //add dom element
+    var newDiv = document.createElement("div"); 
+    newDiv.id = Math.random().toString(36).substring(2, 15);
+    newDiv.style = "height: 300px; width: 100%;";
+    var container = document.getElementById(container); 
+    container.appendChild(newDiv);
+
+    //draw chart
+    var chart = new CanvasJS.Chart(newDiv.id,
+    {
+      zoomEnabled: true,
+      title:{
+      text: title
+      },
+      axisX:{
+        labelFormatter: function (e) {
+               return "0x" + e.value.toString(16);  
+        }
+       }, 
+      axisY:{
+        labelFormatter: function (e) {
+               return 2**e.value;  
+        }
+      }, 
+      toolTip:{
+        shared: true,
+        contentFormatter: function (e) {
+          var addr = e.entries[0].dataPoint.x
+          if ((addr & 0xfffffffe) in symbol_lookup) {
+            var name = symbol_lookup[addr & 0xfffffffe]
+            return "0x"+addr.toString(16) + " ("+name+")";
+          }
+
+          return "0x"+addr.toString(16);
+        }
+      },
+      data: [
+        {type: "line", name: "Read", showInLegend: true, dataPoints: read},
+        {type: "line", name: "Write", showInLegend: true, dataPoints: write},
+        {type: "line", name: "Exec", showInLegend: true, dataPoints: exec},
+      ]
+    });
+
+    chart.render();
+  }
+
+  function hexdump(buffer, blockSize) {
+    blockSize = blockSize*2 || 32;
+    var lines = [];
+    var hex = "0123456789ABCDEF";
+    for (var b = 0; b < buffer.length; b += blockSize) {
+      var block = buffer.slice(b, Math.min(b + blockSize, buffer.length));
+      var addr = ("0000" + (b/2).toString(16)).slice(-4);
+
+      var chars = "";
+      for (var i = 0; i < block.length; i += 2) {
+        chars +=  " " + block.substr(i, 2);
+      }
+
+      //chars += "   ".repeat(blockSize - block.length);
+      //lines.push(addr + " " + chars);
+      lines.push(chars);
+    }
+    return lines.join("\n");
+  }
+
+  function create_reverse_symbol_lookup(symbols) {
+    var reverse = {}
+    for (name in symbols) { 
+      var addr = symbols[name];
+      reverse[addr & 0xfffffffe] = name;
+    }
+    return reverse;
+  }
+
+  //Helper function to download files generated in js
+  function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:application/octet-stream;base64,' + btoa(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+</script>
+
+{% block content %}
+{% endblock %}

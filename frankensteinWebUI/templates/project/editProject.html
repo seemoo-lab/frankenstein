@@ -1,0 +1,618 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<script>
+var project = {};
+var updateCallbacks = [];
+
+
+/*
+Reloads the project config and updates the page
+*/
+function updateProject() {
+  $.getJSON("getProjectCfg?projectName={{ projectName }}", function(p) {
+    project=p;
+
+    for (var i in updateCallbacks) updateCallbacks[i]();
+  });
+}
+
+function addUpdateCallback(f) {
+  updateCallbacks.push(f);
+}
+
+
+/*
+Default action for edit symbol is update
+*/
+$("#editSymbolDialogForm").submit(function(e) {
+  e.preventDefault();
+  submitDialogForm('editSymbolDialogForm', 'actionUpdate');
+});
+
+/*
+Submits a form and displays the result (error) if not empty
+On succsess close dialog
+*/
+function submitDialogForm(id, action) {
+  var form = $("#"+id+"Form");
+  var url = form.attr('action');
+  var data = new FormData(form[0]);
+
+  document.getElementById(id+"Msg").innerHTML = "";
+  data.append(action, "");
+
+  $.ajax({
+    type: "POST",
+    url: url,
+    data: data,
+    cache: false,
+    contentType: false,
+    processData: false,
+    enctype: 'multipart/form-data',
+    processData: false,
+    success: function(msg)
+    {
+      updateProject();
+      if (msg)
+        document.getElementById(id+"Msg").innerHTML = msg;
+      else {
+        document.getElementById(id).close();
+      }
+    }
+  });
+};
+
+/*
+Updates Select field with all groups
+*/
+function updateGroupOptions(id, defaultGroup="", additionalGroup="") {
+  var select = document.getElementById(id);
+  select.innerHTML = "";
+
+  if (defaultGroup && defaultGroup.length > 0) {
+    var option = document.createElement("option");
+    option.text = defaultGroup;
+    select.add(option);
+  }
+
+  if (additionalGroup && additionalGroup.length > 0) {
+    var option = document.createElement("option");
+    option.text = additionalGroup;
+    select.add(option);
+  }
+
+  for (var groupName in project.segment_groups) {
+    if ( groupName != defaultGroup && groupName != additionalGroup) {
+      var option = document.createElement("option");
+      option.text = groupName;
+      select.add(option);
+    }
+  }
+}
+
+</script>
+
+<!--
+
+Path: {{ project.path }}</br>
+Toolchain Prefix: {{ project.cfg.general.TOOLCHAIN }} </br>
+EMULATION_CODE_BASE: 0x{{ project.cfg.general.EMULATION_CODE_BASE | stringformat:'x' }} </br>
+PATCH_BASE: 0x{{ project.cfg.general.PATCH_BASE | stringformat:'x' }} </br>
+CFLAGS: {{ project.cfg.general.CFLAGS }} </br>
+Thumb Mode: {{ project.cfg.general.thumb_mode }} </br>
+-->
+
+<!--
+    _        _   _                 
+   / \   ___| |_(_) ___  _ __  ___ 
+  / _ \ / __| __| |/ _ \| '_ \/ __|
+ / ___ \ (__| |_| | (_) | | | \__ \
+/_/   \_\___|\__|_|\___/|_| |_|___/
+                                             
+-->
+
+
+<h3>Actions</h3>
+
+<!-- Edit Config -->
+<input type="button" value="Edit Config" onclick="document.getElementById('editConfigDialog').showModal()">
+<dialog close id="editConfigDialog">
+  <h4 id="editConfigDialogTitle">Load Segment</h4>
+  <form action="editConfig" id="editConfigDialogForm" enctype="multipart/form-data" method="POST">
+    {% csrf_token %}
+    <input type="hidden" id="projectName" name="projectName" value="{{ projectName }}">
+    TOOLCHAIN <input type="text" name="toolchain" id="editConfigToolchain" value="" style="width:100%"/> <br>
+    EMULATION_CFLAGS <input type="text" name="emulationCFlags" id="editConfigEmulationCFlags" value="" style="width:100%"/> <br>
+    EMULATION_CODE_BASE <input type="text" name="emulationCodeBase" id="editConfigEmulationCodeBase" value="" style="width:100%"/> <br>
+    PATCH_CFLAGS <input type="text" name="patchCFlags" id="editConfigPatchCFlags" value="" style="width:100%"/> <br>
+    PATCH_CODE_BASE <input type="text" name="patchCodeBase" id="editConfigPatchCodeBase" value="" style="width:100%"/> <br>
+    <input type="button" value="Save" onclick="submitDialogForm('editConfigDialog', 'save')" />
+  </form>
+  <pre id="editConfigDialogMsg"></pre>
+</dialog>
+
+<script>
+  function editConfigUpdate() {
+    document.getElementById("editConfigToolchain").value = project.config["TOOLCHAIN"];
+    document.getElementById("editConfigEmulationCFlags").value = project.config["EMULATION_CFLAGS"];
+    document.getElementById("editConfigEmulationCodeBase").value = "0x"+project.config["EMULATION_CODE_BASE"].toString(16);
+    document.getElementById("editConfigPatchCFlags").value = project.config["PATCH_CFLAGS"];
+    document.getElementById("editConfigPatchCodeBase").value = "0x"+project.config["PATCH_CODE_BASE"].toString(16);
+  }
+  addUpdateCallback(editConfigUpdate);
+</script>
+
+<!-- Load Binary Dialog -->
+<input type="button" value="Load Binary" onclick="document.getElementById('loadSegmentDialog').showModal()">
+<dialog close id="loadSegmentDialog">
+  <h4 id="loadSegmentDialogTitle">Load Segment</h4>
+  <form action="loadSegment" id="loadSegmentDialogForm" enctype="multipart/form-data" method="POST">
+    {% csrf_token %}
+    {{ loadSegmentForm.projectName }}
+    {{ loadSegmentForm.segment.help_text }} {{ loadSegmentForm.segment }} </br>
+    {{ loadSegmentForm.addr.help_text }} {{ loadSegmentForm.addr }} </br>
+    Group <select name="groupName" id="loadSegmentGroupSelect" size="1"></select> <br>
+    <input type="button" value="Load" onclick="submitDialogForm('loadSegmentDialog', 'load')" />
+  </form>
+  <pre id="loadSegmentDialogMsg"></pre>
+</dialog>
+
+<script>
+function loadSegmentUpdateGroupOptions() {
+  updateGroupOptions("loadSegmentGroupSelect", "");
+}
+
+addUpdateCallback(loadSegmentUpdateGroupOptions);
+</script>
+
+
+
+<!-- Load ELF Dialog -->
+<input type="button" value="Load ELF" onclick="document.getElementById('loadELFDialog').showModal()">
+<dialog close id="loadELFDialog">
+  <h4 id="loadELFDialogTitle">Load ELF</h4>
+  <form action="loadELF" id="loadELFDialogForm" enctype="multipart/form-data" method="POST">
+    {% csrf_token %}
+    {{ loadELFForm.projectName }}
+    {{ loadELFForm.elf.help_text }} <br>
+    {{ loadELFForm.elf }} <br>
+    {{ loadELFForm.loadSymbols.help_text }} {{ loadELFForm.loadSymbols }} <br>
+    {{ loadELFForm.loadSegments.help_text }} {{ loadELFForm.loadSegments }} <br>
+    Group <select name="groupName" id="loadELFGroupSelect" size="1"></select> <br>
+    <input type="button" value="Load" onclick="submitDialogForm('loadELFDialog', 'load')" />
+  </form>
+  <pre id="loadELFDialogMsg"></pre>
+</dialog>
+<script>
+function loadELFUpdateGroupOptions() {
+  updateGroupOptions("loadELFGroupSelect", "Create New", "global");
+}
+
+addUpdateCallback(loadELFUpdateGroupOptions);
+</script>
+
+<!--{% include 'project/loadIdb.html' %} -->
+
+
+
+<!-- Add Symbol Dialog -->
+<input type="button" value="Add symbol" onclick="document.getElementById('addSymbolDialog').showModal()">
+<dialog close id="addSymbolDialog">
+  <h4 id="addSymbolDialogTitle">Add Symbol</h4>
+  <form action="editSymbol" id="addSymbolDialogForm" method="POST">
+    {% csrf_token %}
+    <input type="hidden" id="projectName" name="projectName" value="{{ projectName }}">
+    <input type="hidden" name="oldGroupName" id="addSymbolOldName" value="dummy" /> <br>
+    <input type="hidden" name="oldSymbolName" id="addSymbolOldName" value="dummy" /> <br>
+    Name <input type="text" name="newSymbolName" id="addSymbolNewName" value="" style="width:100%"/> <br>
+    Value <input type="text" name="value" id="addSymbolValue" value="" style="width:100%"/> <br>
+    Group <select name="newGroupName" id="addSymbolGroupSelect" size="1"></select> <br>
+    <input type="button" value="Add" onclick="submitDialogForm('addSymbolDialog', 'actionAdd')" />
+  </form>
+  <pre id="addSymbolDialogMsg"></pre>
+</dialog>
+
+<script>
+function addSymbolupdateGroupOptions() {
+  updateGroupOptions("addSymbolGroupSelect", "global");
+}
+
+addUpdateCallback(addSymbolupdateGroupOptions);
+</script>
+
+<!--
+ ____  _       _                 
+ |  _ \(_) __ _| | ___   __ _ ___ 
+ | | | | |/ _` | |/ _ \ / _` / __|
+ | |_| | | (_| | | (_) | (_| \__ \
+ |____/|_|\__,_|_|\___/ \__, |___/
+                        |___/    
+-->
+<!-- Edit Segment Dialog -->
+<dialog close id="editGroupDialog">
+  <h4 id="editGroupDialogTitle">Edit Group</h4>
+  <form action="editGroup" id="editGroupDialogForm" method="POST">
+    {% csrf_token %}
+    <input type="hidden" id="projectName" name="projectName" value="{{ projectName }}">
+    <input type="hidden" name="oldGroupName" id="editGroupOldGroupName" value="" /> 
+    Name <input type="text" name="newGroupName" id="editGroupNewGroupName" value="" style="width:100%" /> <br>
+    Active <input type="checkbox" name="active" id=editGroupActive> <br>
+
+    <input type="button" value="Update" onclick="submitDialogForm('editGroupDialog', 'actionUpdate')" />
+    <input type="button" value="Delete" onclick="submitDialogForm('editGroupDialog', 'actionDelete')" />
+  </form>
+  <pre id="editGroupDialogMsg"></pre>
+</dialog>
+<script>
+  function editGroupDialog(event) {
+    var target = event.target || event.srcElement;
+    var groupName = target.groupName || target.parentNode.groupName;
+    var active = project.segment_groups[groupName].active;
+    document.getElementById("editGroupOldGroupName").value = groupName;
+    document.getElementById("editGroupNewGroupName").value = groupName;
+    document.getElementById("editGroupActive").checked = active;
+
+    document.getElementById("editGroupDialogTitle").innerHTML = "Edit Group " + groupName;
+    document.getElementById("editGroupDialogMsg").innerHTML = "";
+    document.getElementById("editGroupDialog").showModal();
+  }
+</script>
+
+
+<!-- Edit Segment Dialog -->
+<dialog close id="editSegmentDialog">
+  <h4 id="editSegmentDialogTitle">Edit Segment</h4>
+  <form action="editSegment" id="editSegmentDialogForm" method="POST">
+    {% csrf_token %}
+    <input type="hidden" id="projectName" name="projectName" value="{{ projectName }}">
+    <input type="hidden" name="oldSegmentName" id="editSegmentOldSegmentName" value="" /> 
+    <input type="hidden" name="oldGroupName" id="editSegmentOldGroupName" value="" /> 
+    Name <input type="text" name="newSegmentName" id="editSegmentNewSegmentName" value="" style="width:100%" /> <br>
+    Addr <input type="text" name="addr" id="editSegmentAddr" value=""/> <br>
+    Group <select name="newGroupName" id="editSegmentNewGroupSelect" size="1"></select> <br>
+    Active <input type="checkbox" name="active" id=editSegmentActive> <br>
+
+    <input type="button" value="Update" onclick="submitDialogForm('editSegmentDialog', 'actionUpdate')" />
+    <input type="button" value="Delete" onclick="submitDialogForm('editSegmentDialog', 'actionDelete')" />
+  </form>
+  <pre id="editSegmentDialogMsg"></pre>
+</dialog>
+<script>
+  function editSegmentDialog(event) {
+    var target = event.target || event.srcElement;
+    var groupName = target.groupName || target.parentNode.groupName;
+    var segmentName = target.segmentName || target.parentNode.segmentName;
+    var active = project.segment_groups[groupName].segments[segmentName].active;
+    var addr  = project.segment_groups[groupName].segments[segmentName].addr;
+    document.getElementById("editSegmentOldSegmentName").value = segmentName;
+    document.getElementById("editSegmentOldGroupName").value = groupName;
+    document.getElementById("editSegmentNewSegmentName").value = segmentName;
+    document.getElementById("editSegmentAddr").value = "0x"+addr.toString(16);
+    updateGroupOptions("editSegmentNewGroupSelect", groupName);
+    document.getElementById("editSegmentActive").checked = active;
+    document.getElementById("editSegmentDialogTitle").innerHTML = "Edit Segment " + segmentName;
+    document.getElementById("editSegmentDialogMsg").innerHTML = "";
+    document.getElementById("editSegmentDialog").showModal();
+  }
+</script>
+
+
+<!-- Edit Symbol Dialog -->
+<dialog close id="editSymbolDialog">
+  <h4 id="editSymbolDialogTitle">Edit Symbol</h4>
+  <form action="editSymbol" id="editSymbolDialogForm" method="POST">
+    {% csrf_token %}
+    <input type="hidden" id="projectName" name="projectName" value="{{ projectName }}">
+    <input type="hidden" name="oldSymbolName" id="editSymbolOldName" value="" /> 
+    <input type="hidden" name="oldGroupName" id="editSymbolGroupName" value="" /> <br>
+    Name <input type="text" name="newSymbolName" id="editSymbolNewName" value="" style="width:100%" /> <br>
+    Value <input type="text" name="value" id="editSymbolValue" value="" style="width:100%"/> <br>
+    Group <select name="newGroupName" id="editSymbolNewGroupSelect" size="1"></select> <br>
+
+    <input type="button" value="Update" onclick="submitDialogForm('editSymbolDialog', 'actionUpdate')" />
+    <input type="button" value="Delete" onclick="submitDialogForm('editSymbolDialog', 'actionDelete')" />
+  </form>
+  <pre id="editSymbolDialogMsg"></pre>
+</dialog>
+<script>
+  function editSymbolDialog(event) {
+    var target = event.target || event.srcElement;
+    var groupName = target.groupName || target.parentNode.groupName;
+    var symbolName = target.symbolName || target.parentNode.symbolName;
+    var symbolValue = target.symbolValue || target.parentNode.symbolValue;
+    document.getElementById("editSymbolOldName").value = symbolName;
+    document.getElementById("editSymbolNewName").value = symbolName;
+    document.getElementById("editSymbolValue").value = "0x"+symbolValue.toString(16);
+    updateGroupOptions("editSymbolNewGroupSelect", groupName, "global");
+    document.getElementById("editSymbolGroupName").value = groupName;
+    document.getElementById("editSymbolDialogTitle").innerHTML = "Edit Symbol " + symbolName;
+    document.getElementById("editSymbolDialogMsg").innerHTML = "";
+    document.getElementById("editSymbolDialog").showModal();
+  }
+</script>
+
+
+<hr>
+
+<!---
+  ____              _ _          ____ _               _    
+ / ___|  __ _ _ __ (_) |_ _   _ / ___| |__   ___  ___| | __
+ \___ \ / _` | '_ \| | __| | | | |   | '_ \ / _ \/ __| |/ /
+  ___) | (_| | | | | | |_| |_| | |___| | | |  __/ (__|   < 
+ |____/ \__,_|_| |_|_|\__|\__, |\____|_| |_|\___|\___|_|\_\
+                          |___/                            
+-->
+
+<script>
+function sanity_check() {
+  $.get("projectSanityCheck?projectName={{ projectName }}", function(error) {
+    document.getElementById("sanityCheckText").innerHTML = error;
+    if (!error || error.length === 0)
+      document.getElementById("sanityCheck").style.display = "none";
+    else
+      document.getElementById("sanityCheck").style.display = "block";
+  });
+}
+addUpdateCallback(sanity_check);
+</script>
+
+<div class="overflow:hidden" id="sanityCheck" style="display:none">
+    <h3>Errors</h3>
+    <textarea id="sanityCheckText" style="width:50%;height:80px"></textarea>
+  <hr>
+</div>
+
+<!--
+     ____                           
+    / ___|_ __ ___  _   _ _ __  ___ 
+   | |  _| '__/ _ \| | | | '_ \/ __|
+   | |_| | | | (_) | |_| | |_) \__ \
+    \____|_|  \___/ \__,_| .__/|___/
+                          |_|      
+-->
+
+<script>
+  var groupsDisplayStatus = {}
+  function showGroups() {
+    div = document.createElement('div');
+    div.id = "segmentGroupsDiv";
+
+    var groupTable = document.createElement('table');
+    div.appendChild(groupTable);
+
+    //Iterate over all groups
+    for (var groupName in project.segment_groups) {
+      var group = project.segment_groups[groupName];
+      groupNav = groupTable.insertRow();
+
+      //Name
+      groupNav.insertCell().innerHTML = groupName;
+
+      //show button
+      var showButton = document.createElement('button');
+      showButton.innerHTML = "Show";
+      showButton.id = "group"+groupName;
+      showButton.addEventListener("click", function() {
+        var content = document.getElementById(this.id+"Content");
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+        groupsDisplayStatus[groupName] = content.style.display;
+      });
+      groupNav.insertCell().appendChild(showButton);
+
+      //edit buttom
+      var editButton = document.createElement('button');
+      editButton.innerHTML = "Edit";
+      editButton.groupName = groupName;
+      editButton.addEventListener("click", editGroupDialog);
+      groupNav.insertCell().appendChild(editButton);
+
+      //Active 
+      groupNav.insertCell().innerHTML = "Active: " + group.active;
+
+      //Group Div
+      var segmentDiv = document.createElement('div');
+      segmentDiv.classList.add("overflow:hidden");
+      segmentDiv.id = showButton.id+"Content";
+      segmentDiv.style.display = (groupName in groupsDisplayStatus) ? groupsDisplayStatus[groupName] : "none";
+      segmentDiv.appendChild(getGroupSegmentTable(groupName));
+
+      segmentTable = groupTable.insertRow().insertCell();
+      segmentTable.colSpan = 3;
+      segmentTable.appendChild(segmentDiv);
+    }
+    oldDiv = document.getElementById("segmentGroupsDiv");
+    oldDiv.parentNode.replaceChild(div, oldDiv);
+  }
+
+  function getGroupSegmentTable(groupName) {
+    //Init Table
+    var group = project.segment_groups[groupName];
+    var groupTable = document.createElement('table');
+    var groupTableHdr = groupTable.createTHead().insertRow();
+    groupTableHdr.insertCell().innerHTML = "Name";
+    groupTableHdr.insertCell().innerHTML = "Start";
+    groupTableHdr.insertCell().innerHTML = "Stop";
+    groupTableHdr.insertCell().innerHTML = "Size";
+    groupTableHdr.insertCell().innerHTML = "Active";
+
+    //Iterate over group segments
+    for (var segmentName in group.segments){
+      var segment = group.segments[segmentName];
+      var segmentRow = groupTable.insertRow();
+      segmentRow.insertCell().innerHTML = segmentName;
+      segmentRow.insertCell().innerHTML = "0x"+segment.addr.toString(16);
+      segmentRow.insertCell().innerHTML = "0x"+(segment.addr+segment.size).toString(16);
+      segmentRow.insertCell().innerHTML = "0x"+segment.size.toString(16);
+      segmentRow.insertCell().innerHTML = segment.active;
+      segmentRow.classList.add("hoverTable");
+      segmentRow.groupName = groupName;
+      segmentRow.segmentName = segmentName;
+      segmentRow.addEventListener('click', editSegmentDialog);
+    }
+
+    return groupTable;
+  }
+
+  addUpdateCallback(showGroups);
+</script>
+
+
+<h3>Segment Groups</h3>
+
+<div id="segmentGroupsDiv"></div>
+
+<hr>
+
+<!--
+      _____ _             _   _____ _     _____ 
+     |  ___(_)_ __   __ _| | | ____| |   |  ___|
+     | |_  | | '_ \ / _` | | |  _| | |   | |_   
+     |  _| | | | | | (_| | | | |___| |___|  _|  
+     |_|   |_|_| |_|\__,_|_| |_____|_____|_|    
+                                              
+-->
+
+<script>
+  function show_finalELF() {
+    table = document.createElement('tbody');
+    table.id = "finalELFTable";
+
+    //Iterate over all groups
+    for (var groupName in project.segment_groups) {
+      var group = project.segment_groups[groupName];
+      //alert(group.active);
+      if (!group.active) continue;
+      
+      //Iterate over group segments
+      for (var segmentName in group.segments){
+        var segment = group.segments[segmentName];
+        if (!segment.active) continue;
+
+        var segmentRow = table.insertRow();
+        segmentRow.insertCell().innerHTML = groupName;
+        segmentRow.insertCell().innerHTML = segmentName;
+        segmentRow.insertCell().innerHTML = "0x"+segment.addr.toString(16);
+        segmentRow.insertCell().innerHTML = "0x"+(segment.addr+segment.size).toString(16);
+        segmentRow.insertCell().innerHTML = "0x"+segment.size.toString(16);
+        segmentRow.classList.add("hoverTable");
+        segmentRow.groupName = groupName;
+        segmentRow.segmentName = segmentName;
+        segmentRow.addEventListener('click', editSegmentDialog);
+      }
+    }
+
+    oldTable = document.getElementById("finalELFTable");
+    oldTable.parentNode.replaceChild(table, oldTable);
+  }
+  addUpdateCallback(show_finalELF);
+</script>
+
+<h3>Final Layout</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Group</th>
+      <th>Name</th>
+      <th>Start</th>
+      <th>Stop</th>
+      <th>Size</th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody id="finalELFTable"></tbody>
+</table>
+
+<hr>
+
+
+<h3>Symbols</h3>
+
+
+<br>
+
+
+
+
+
+
+
+Symbol Name <input type="text" id="symbolNameFilter" onkeyup="filter_symbols()"></input>
+Group Name <input type="text" id="symbolGroupFilter" onkeyup="filter_symbols()"></input>
+<!-- Symbol Table -->
+<table>
+  <thead><td>Group</td><td>Name</td><td>Address</td></thead>
+  <tbody id="symbolTable"></tbody>
+</table>
+
+
+<script>
+
+function filter_symbols() {
+  var n = 0;
+  var symbolNameFilter = new RegExp(document.getElementById('symbolNameFilter').value, "gi");
+  var groupNameFilter = new RegExp(document.getElementById('symbolGroupFilter').value, "gi");
+
+  table = document.createElement('tbody');
+  table.id = "symbolTable";
+
+  var symbols = project.symbols;
+  filterSymbolTable(table, symbolNameFilter, "global", symbols);
+
+  for (var groupName in project.segment_groups) {
+    if (groupName.match(groupNameFilter)) {
+      var symbols = project.segment_groups[groupName].symbols;
+      filterSymbolTable(table, symbolNameFilter, groupName, symbols);
+    }
+  }
+
+  var old_table = document.getElementById("symbolTable");
+  old_table.parentNode.replaceChild(table, old_table)
+}
+
+function filterSymbolTable(table, symbolNameFilter, groupName, symbols ) {
+  for (var symbolName in symbols) {
+    if (symbolName.match(symbolNameFilter)) {
+
+      //Add symbol to table
+      var row = table.insertRow();
+
+      row.classList.add("hoverTable");
+      row.groupName = groupName;
+      row.symbolName = symbolName;
+      row.symbolValue = symbols[symbolName];
+      row.addEventListener('click', editSymbolDialog);
+
+      // Add some text to the new cells:
+      var coloredName = symbolName.replace(symbolNameFilter, function (x){return '<font color="red">'+x+'</font>'});
+      row.insertCell().innerHTML = groupName;
+      row.insertCell().innerHTML = coloredName;
+      row.insertCell().innerHTML = "0x"+symbols[symbolName].toString(16);
+
+      //limit amount of symbols
+      if (table.rows.length > 1024) {
+        var row = table.insertRow();
+        row.insertCell().innerHTML = "Truncated"
+        row.insertCell().innerHTML = "Truncated";
+        break
+      }
+    }
+  }
+
+}
+
+addUpdateCallback(filter_symbols);
+</script>
+
+<script>
+updateProject();
+</script>
+
+{% endblock %}

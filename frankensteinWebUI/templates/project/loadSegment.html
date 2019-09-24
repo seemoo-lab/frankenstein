@@ -1,0 +1,9 @@
+<h2>Load Segment From Dump </h2>
+
+<form action="loadSegment" enctype="multipart/form-data" method="POST">
+  {% csrf_token %}
+  <table>
+    {{ loadSegmentForm.as_table }}
+  </table>
+  <input type="submit" value="Load">
+</form>

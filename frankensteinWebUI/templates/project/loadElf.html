@@ -1,0 +1,15 @@
+<h2> Load ELF File </h2>
+
+<form action="loadElf" enctype="multipart/form-data" method="POST">
+  {% csrf_token %}
+  <table>
+    {{ loadElfForm.as_table }}
+  </table>
+  <input type="submit" value="Load">
+</form>
+
+
+
+
+
+

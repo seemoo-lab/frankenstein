@@ -1,0 +1,9 @@
+<h2> Load Idb File </h2>
+
+<form action="loadIdb" enctype="multipart/form-data" method="POST">
+  {% csrf_token %}
+  <table>
+    {{ loadIdbForm.as_table }}
+  </table>
+  <input type="submit" value="Load">
+</form>
