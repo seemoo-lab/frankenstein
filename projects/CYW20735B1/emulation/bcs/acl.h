@@ -103,7 +103,7 @@ void acl() {
 
         //len = (pkt_log >> 5) & 0x1f;
         len = (pkt_log >> 5) & 0x3ff;
-        len = 512;
+        len = 128;
         print_var(len);
 
         if (rtx_dma_ctl != 3 && dmaActiveRxBuffer) {
