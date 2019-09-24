@@ -532,17 +532,19 @@ addUpdateCallback(sanity_check);
 
 <hr>
 
+<h3>Emulators</h3>
+
+{% for emu in emulators %}
+
+<a href="emulate?projectName={{ projectName }}&emulatorName={{ emu }}">{{ emu }}</a> <br>
+
+{% endfor %}
 
 <h3>Symbols</h3>
 
+<hr>
 
 <br>
-
-
-
-
-
-
 
 Symbol Name <input type="text" id="symbolNameFilter" onkeyup="filter_symbols()"></input>
 Group Name <input type="text" id="symbolGroupFilter" onkeyup="filter_symbols()"></input>

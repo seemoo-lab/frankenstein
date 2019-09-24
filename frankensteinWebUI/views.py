@@ -72,9 +72,13 @@ class loadIdbForm(forms.Form):
 
 
 
+
 """
 Project Management
 """
+def getProjectPath(projectName):
+    return "projects/"+os.path.basename(projectName)
+
 def getProjectByName(projectName):
     projectPath = "projects/"+os.path.basename(projectName)
     return Project(projectPath)
@@ -83,24 +87,33 @@ def index(request):
     projects = glob.glob("projects/*/project.json")
     projects = map(lambda x: os.path.basename(os.path.dirname(x)), projects)
     context = {"projects": projects}
-    return render(request, 'project/index.html', context)
+    return render(request, 'index.html', context)
 
-def editProject(request):
+def project(request):
     projectName = request.GET["projectName"]
-    if not os.path.isfile("projects/%s/project.json"):
-        redirect("/")
+    if not os.path.isfile("projects/%s/project.json" % projectName):
+        return redirect("/")
 
     project = getProjectByName(projectName)
 
-    #segments = sorted(project.cfg["segments"].iteritems(), key=lambda x: x[1]["addr"])
-    context = {"projectName": projectName, "project": project}
+    patches = glob.glob(getProjectPath(projectName)+"/gen/*.patch")
+    patches = map(os.path.basename, patches)
+    emulators = glob.glob(getProjectPath(projectName)+"/gen/*.exe")
+    emulators = map(os.path.basename, emulators)
+
+    context = {
+        "projectName": projectName,
+        "project": project,
+        "patches": patches,
+        "emulators": emulators
+    }
     context['projectNameForm'] = projectNameForm({"projectName": projectName})
     context['editSegmentForm'] = editSegmentForm({"projectName": projectName})
     context['loadSegmentForm'] = loadSegmentForm({"projectName": projectName})
     context['loadELFForm'] = loadELFForm({"projectName": projectName})
     context['loadIdbForm'] = loadIdbForm({"projectName": projectName})
 
-    return render(request, 'project/editProject.html', context)
+    return render(request, 'project.html', context)
 
 
 def newProject(request):
@@ -337,3 +350,75 @@ def loadSegment(request):
         form = loadELFForm()
 
     return HttpResponse(str(form.errors))
+
+
+"""
+Emulation
+"""
+
+
+from core import uc
+import base64
+
+class emulateForm(forms.Form):
+    tracepoints = forms.CharField(max_length=100, help_text='RWX Tracepoints', required=False)
+    stdin = forms.CharField(help_text='Stdin Hex Dump', required=False)
+
+def emulate(request):
+    context = {}
+
+    projectName = request.GET["projectName"]
+    project = getProjectByName(projectName)
+    if not project:
+        return redirect("/")
+
+    projectPath = getProjectPath(projectName)
+
+    if request.method == 'POST':
+        form = emulateForm(request.POST)
+        if form.is_valid():
+            tracepoints = form.cleaned_data["tracepoints"]
+            if len(tracepoints) > 2:
+                tracepoints = map(lambda x:int(x,16), tracepoints.split(","))
+            else:
+                tracepoints = []
+
+            try:
+                stdin = unhexlify(form.cleaned_data["stdin"])
+            except:
+                import traceback; traceback.print_exc()
+                stdin = ""
+
+            binaryPath = os.path.join(projectPath, "gen", request.GET["emulatorName"])
+            emulator = uc.emu(binaryPath, stdin, tracepoints, emulator_base=project.cfg["config"]["EMULATION_CODE_BASE"])
+            emulator.run()
+
+            #prepare results for html
+            results = emulator.results
+            from ansi2html import Ansi2HTMLConverter
+            conv = Ansi2HTMLConverter()
+            for r in results:
+                del r["stdout"]
+                r["pc_symbolized"] = project.symbolize(r["regs"]["pc"])
+                r["stderr"] = base64.b64encode(str(r["stderr"]))
+                r["memdif_rendered"] = base64.b64encode(r["memdif_rendered"])
+                r["memdif_html"] = base64.b64encode(conv.convert(r["memdif_rendered"]))
+
+            emulator.coverage_activity_json = json.dumps(emulator.coverage_activity)
+            emulator.read_activity_json = json.dumps(emulator.read_activity)
+            emulator.write_activity_json = json.dumps(emulator.write_activity)
+
+            #context["segments"] = sorted(project.cfg["segments"].iteritems(), key=lambda x: x[1]["addr"])
+            context["symbols_json"] = json.dumps(project.cfg["symbols"])
+            context["emulator"] = emulator
+            context["drcov_b64"] = base64.b64encode(emulator.get_drcov())
+            context["project"] = project
+
+    else:
+        form = emulateForm()
+
+    context["emulateForm"] = form
+    context["projectName"] = projectName
+    context["emulatorName"] = request.GET["emulatorName"]
+
+    return render(request, 'emulate.html', context)

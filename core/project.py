@@ -93,7 +93,7 @@ class Project:
 
     def save(self):
         with open("%s/project.json" % self.path, "w") as f:
-            data = json.dumps(self.cfg, indent=4)
+            data = json.dumps(self.cfg, indent=4, sort_keys=True)
             f.write(data)
         self.create_build_scripts()
 
