@@ -51,6 +51,7 @@ class emu:
         self.fw_entry = self.symbols["cont"] # ignore everything until that symbol
 
         #loading prog headrs
+        self.state = []
         self.segments = []
         for i in xrange(self.elf.num_sections()):
             section = self.elf.get_section(i)
@@ -74,6 +75,7 @@ class emu:
                     self.emulator_base_stop = emulator_base + size
                 else:
                     self.segments += [(name, addr, size)]
+                self.state += [(addr, size, data)]
 
         self.segments = sorted(self.segments, key=lambda x:x[0])
 
