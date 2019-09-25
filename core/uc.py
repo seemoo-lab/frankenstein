@@ -57,7 +57,7 @@ class emu:
             section = self.elf.get_section(i)
             if section.header["sh_flags"] & SH_FLAGS.SHF_ALLOC != 0:
                 addr = section.header["sh_addr"]
-                size = section.header["sh_size"]
+                size = self.pagreesize(section.header["sh_size"])
                 name = section.name
 
                 #NOBITS sections contains no data in file
@@ -68,7 +68,7 @@ class emu:
                     data = section.data()
 
                 print("Loading %s @ 0x%x - 0x%x (%d bytes)" % (name, addr, addr+len(data), len(data)))
-                self.uc.mem_map(addr, self.pagreesize(size), UC_PROT_ALL)
+                self.uc.mem_map(addr, size, UC_PROT_ALL)
                 self.uc.mem_write(addr, data)
                 if emulator_base == addr:
                     self.emulator_base_start = emulator_base
@@ -77,7 +77,7 @@ class emu:
                     self.segments += [(name, addr, size)]
                 self.state += [(addr, size, data)]
 
-        self.segments = sorted(self.segments, key=lambda x:x[0])
+            self.segments = sorted(self.segments, key=lambda x:x[0])
 
 
         #stack
@@ -270,12 +270,12 @@ class emu:
             new_data = self.uc.mem_read(addr, size)
             new_data = map(chr, new_data)
             current_offset = 0
+            print len(data), len(new_data), size
 
             #for each hexdump row
             while current_offset <  size:
                 old_row = data[current_offset: current_offset+block_size]
                 new_row = new_data[current_offset: current_offset+block_size]
-
                 #ugly equal comparison
                 equal = True
                 for x,y in zip(new_row, old_row):
