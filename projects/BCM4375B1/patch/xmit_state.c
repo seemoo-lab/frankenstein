@@ -22,27 +22,27 @@ void xmit_memory(struct saved_regs *regs, int cont) {
     hci_xmit_state_notify(regs, cont);
 
     hci_xmit_segment(0x0,      0x140000);
-    hci_xmit_segment(0x160000, 0x180000);
-    hci_xmit_segment(0x200000, 0x288100);
-    hci_xmit_segment(0x300000, 0x308000);
-    hci_xmit_segment(0x310000, 0x322000);
-    hci_xmit_segment(0x324000, 0x368000);
-    hci_xmit_segment(0x370000, 0x380000);
-    hci_xmit_segment(0x390000, 0x398000);
-    hci_xmit_segment(0x500000, 0x601000);
-    hci_xmit_segment(0x604800, 0x605000);
-    hci_xmit_segment(0x640000, 0x641000);
-    hci_xmit_segment(0x650000, 0x650600);
-    hci_xmit_segment(0x650c00, 0x650f00);
-    hci_xmit_segment(0x651000, 0x651800);
-    hci_xmit_segment(0x652000, 0x652600);
-    hci_xmit_segment(0x652c00, 0x652f00);
-    hci_xmit_segment(0x653000, 0x653800);
-    hci_xmit_segment(0x654000, 0x654400);
-    hci_xmit_segment(0x680000, 0x8e5b00);
-    hci_xmit_segment(0x8f3600, 0x8f5b00);
-    hci_xmit_segment(0x96b000, 0x96d500);
-    hci_xmit_segment(0x9e1800, 0x9e2300);
+    //hci_xmit_segment(0x160000, 0x180000);
+    //hci_xmit_segment(0x200000, 0x288100);
+    //hci_xmit_segment(0x300000, 0x308000);
+    //hci_xmit_segment(0x310000, 0x322000);
+    //hci_xmit_segment(0x324000, 0x368000);
+    //hci_xmit_segment(0x370000, 0x380000);
+    //hci_xmit_segment(0x390000, 0x398000);
+    //hci_xmit_segment(0x500000, 0x601000);
+    //hci_xmit_segment(0x604800, 0x605000);
+    //hci_xmit_segment(0x640000, 0x641000);
+    //hci_xmit_segment(0x650000, 0x650600);
+    //hci_xmit_segment(0x650c00, 0x650f00);
+    //hci_xmit_segment(0x651000, 0x651800);
+    //hci_xmit_segment(0x652000, 0x652600);
+    //hci_xmit_segment(0x652c00, 0x652f00);
+    //hci_xmit_segment(0x653000, 0x653800);
+    //hci_xmit_segment(0x654000, 0x654400);
+    //hci_xmit_segment(0x680000, 0x8e5b00);
+    //hci_xmit_segment(0x8f3600, 0x8f5b00);
+    //hci_xmit_segment(0x96b000, 0x96d500);
+    //hci_xmit_segment(0x9e1800, 0x9e2300);
 
     //Notify Done
     hci_xmit_state_notify(0, 0);

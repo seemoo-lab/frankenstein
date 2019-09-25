@@ -60,11 +60,6 @@ void slist_add_before( void* slist, void *item);
 /*
 Utils
 */
-void *dynamic_memory_AllocateOrReturnNULL(int size);
-void *dynamic_memory_AllocateOrDie(int size);
-void *dynamic_memory_AllocatePrivate(void *pool, int x);
-void *dynamic_memory_SpecialBlockPoolAllocateOrReturnNULL(int size);
-void dynamic_memory_Release(void *buff);
 int rand();
 int rbg_rand(int);
 

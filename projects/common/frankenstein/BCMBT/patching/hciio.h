@@ -67,8 +67,29 @@ void hci_xmit_map_report(uint32_t ptr) {
     hci_xmit_event(0xfa, (char *)&ptr, 4);
 }
 
+
+/*
+I/O macros used in the fw
+*/
 #ifndef FRANKENSTEIN_EMULATION
     #define print(s) hci_puts(s)
+    char hex_chars[] = "0123456789abcdef";
+    void print_ptr(uint32_t p) {
+        char hex_str[] = "0x00000000";
+        char not_skip_prefix = 0;
+        char *c = hex_str+2;
+
+        for (int i=sizeof(uint32_t)-1; i>=0; i--) {
+            if (not_skip_prefix = not_skip_prefix | ((p>>(i*8)&0xff))) {
+                *(c++) = hex_chars[(p>>(i*8+4))&0xf];
+                *(c++) = hex_chars[(p>>(i*8))&0xf];
+            }
+        }
+        if (!not_skip_prefix) *(c++) = '0';
+        *(c++) = '\0';
+        print(hex_str);
+    }
+    #define print_var(x) {print(#x" = "); print_ptr((uint32_t)x); print("\n");}
 #endif
 
 

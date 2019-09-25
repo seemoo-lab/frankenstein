@@ -37,9 +37,15 @@ void test_loop() {
 void dma_Interrupt();
 void quad_quadInterrupt();
 int dlist_cont(void *dlist);
+void *GKI_os_malloc(int);
+GKI_getbuf(int);
 void BtIntDone();
 void _start() {
     patch_code();
+    print_ptr(GKI_getbuf(420));
+
+
+    exit(0);
     queue_add_hooks();
     taskTimerList = &taskTimerList;
     bcsProfilingData = 0;

@@ -59,7 +59,7 @@ void msgqueue_Put_hook(struct saved_regs *regs, void *arg) {
 }
 
 /*
-threading
+This
 */
 
 void print_thrd_bcmbt(uint32_t thrd) {
@@ -99,6 +99,7 @@ uint32_t _tx_v7m_get_int();
 
 void synch_GetXSPRExceptionNum();
 void osapi_interruptContext();
+void btclk_AdvanceNatClk_clkpclk();
 
 void patch_code() {
     //ThreadX basics
@@ -107,7 +108,8 @@ void patch_code() {
     patch_return(_tx_v7m_get_int);
     patch_jump(_tx_thread_system_return, _tx_thread_system_return_hook);
 
-    patch_jump(osapi_interruptContext, _tx_thread_system_return);
+    patch_return(osapi_interruptContext);
+    //patch_jump(osapi_interruptContext, _tx_thread_system_return);
     //patch_return(osapi_interruptContext);
 
     //Functions, we do not support
@@ -115,6 +117,8 @@ void patch_code() {
     patch_return(0x20ffb2); //get_and_disable_int 2nd ed?!
     patch_return(btclk_DelayXus);
     patch_return(btclk_Wait4PclkChange);
+    patch_return(btclk_AdvanceNatClk_clkpclkHWWA);
+    patch_return(btclk_AdvanceNatClk_clkpclk);
 
     //Show thread names
     print_thrd = print_thrd_bcmbt;
@@ -131,10 +135,10 @@ void patch_code() {
     trace(dbfw_assert_fatal, 1, false);
 
     //Disable NV RAM
-    patch_return(wiced_hal_read_nvram_hook);
-    trace(wiced_hal_read_nvram_hook, 4, true);
-    patch_return(wiced_hal_write_nvram_hook);
-    trace(wiced_hal_write_nvram_hook, 4, true);
+    patch_return(wiced_hal_read_nvram);
+    trace(wiced_hal_read_nvram, 4, true);
+    patch_return(wiced_hal_write_nvram);
+    trace(wiced_hal_write_nvram, 4, true);
 
     //Enable Osapi Timers
     add_timer_hooks();
