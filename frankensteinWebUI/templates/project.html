@@ -442,7 +442,9 @@ addUpdateCallback(sanity_check);
     groupTableHdr.insertCell().innerHTML = "Active";
 
     //Iterate over group segments
-    for (var segmentName in group.segments){
+    var segmentsSorted = Object.keys(group.segments).sort(function(a,b){ return group.segments[a].addr-group.segments[b].addr});
+    for (var i in segmentsSorted) {
+      var segmentName = segmentsSorted[i];
       var segment = group.segments[segmentName];
       var segmentRow = groupTable.insertRow();
       segmentRow.insertCell().innerHTML = segmentName;
@@ -490,7 +492,10 @@ addUpdateCallback(sanity_check);
       if (!group.active) continue;
       
       //Iterate over group segments
-      for (var segmentName in group.segments){
+      //for (var segmentName in group.segments){
+      var segmentsSorted = Object.keys(group.segments).sort(function(a,b){ return group.segments[a].addr-group.segments[b].addr});
+      for (var i in segmentsSorted) {
+        var segmentName = segmentsSorted[i];
         var segment = group.segments[segmentName];
         if (!segment.active) continue;
 
@@ -548,6 +553,7 @@ addUpdateCallback(sanity_check);
 
 Symbol Name <input type="text" id="symbolNameFilter" onkeyup="filter_symbols()"></input>
 Group Name <input type="text" id="symbolGroupFilter" onkeyup="filter_symbols()"></input>
+Addr <input type="text" id="symbolAddFilterr" onkeyup="filter_symbols()"></input>
 <!-- Symbol Table -->
 <table>
   <thead><td>Group</td><td>Name</td><td>Address</td></thead>
@@ -559,52 +565,76 @@ Group Name <input type="text" id="symbolGroupFilter" onkeyup="filter_symbols()">
 
 function filter_symbols() {
   var n = 0;
-  var symbolNameFilter = new RegExp(document.getElementById('symbolNameFilter').value, "gi");
-  var groupNameFilter = new RegExp(document.getElementById('symbolGroupFilter').value, "gi");
 
   table = document.createElement('tbody');
   table.id = "symbolTable";
 
+  var symbolTable = {};
   var symbols = project.symbols;
-  filterSymbolTable(table, symbolNameFilter, "global", symbols);
+  symbolTable = filterSymboltable(symbolTable, "global", symbols);
 
+  //Iterate Symbols
   for (var groupName in project.segment_groups) {
-    if (groupName.match(groupNameFilter)) {
       var symbols = project.segment_groups[groupName].symbols;
-      filterSymbolTable(table, symbolNameFilter, groupName, symbols);
-    }
+      symbolTable = filterSymboltable(symbolTable, groupName, symbols);
   }
+  showSymbolTable(table, symbolTable);
 
   var old_table = document.getElementById("symbolTable");
   old_table.parentNode.replaceChild(table, old_table)
 }
 
-function filterSymbolTable(table, symbolNameFilter, groupName, symbols ) {
-  for (var symbolName in symbols) {
+function filterSymboltable(symbolTable, groupName, symbols) {
+  var symbolNameFilter = new RegExp(document.getElementById('symbolNameFilter').value, "gi");
+  var groupNameFilter = new RegExp(document.getElementById('symbolGroupFilter').value, "gi");
+  var addrFilter = parseInt(document.getElementById('symbolAddFilterr').value);
+
+  if (!groupName.match(groupNameFilter)) return symbolTable;
+
+  for (symbolName in symbols) {
     if (symbolName.match(symbolNameFilter)) {
-
-      //Add symbol to table
-      var row = table.insertRow();
-
-      row.classList.add("hoverTable");
-      row.groupName = groupName;
-      row.symbolName = symbolName;
-      row.symbolValue = symbols[symbolName];
-      row.addEventListener('click', editSymbolDialog);
-
-      // Add some text to the new cells:
-      var coloredName = symbolName.replace(symbolNameFilter, function (x){return '<font color="red">'+x+'</font>'});
-      row.insertCell().innerHTML = groupName;
-      row.insertCell().innerHTML = coloredName;
-      row.insertCell().innerHTML = "0x"+symbols[symbolName].toString(16);
-
-      //limit amount of symbols
-      if (table.rows.length > 1024) {
-        var row = table.insertRow();
-        row.insertCell().innerHTML = "Truncated"
-        row.insertCell().innerHTML = "Truncated";
-        break
+        var value = symbols[symbolName];
+        if( isNaN(addrFilter))
+          symbolTable[symbolName] = {"displayValue": "0x"+value.toString(16), "value": value, "sortKey": value, "groupName": groupName};
+        else {
+          var displayValue = addrFilter - value;
+          if (displayValue > 0)
+            displayValue = "0x" + addrFilter.toString(16) + " + 0x"+displayValue.toString(16);
+          else
+            displayValue = "0x" + addrFilter.toString(16) + " - 0x"+(-displayValue).toString(16);
+          symbolTable[symbolName] = {"displayValue": displayValue, "value": value, "sortKey": Math.abs(addrFilter - value), "groupName": groupName};
+        }
       }
+    }
+    return symbolTable;
+}
+
+function showSymbolTable(table, symbols ) {
+  var symbolNameFilter = new RegExp(document.getElementById('symbolNameFilter').value, "gi");
+  var symbolsSorted = Object.keys(symbols).sort(function(a,b){ return symbols[a].sortKey-symbols[b].sortKey});
+  for (var i in symbolsSorted) {
+    var symbolName = symbolsSorted[i];
+    //Add symbol to table
+    var row = table.insertRow();
+
+    row.classList.add("hoverTable");
+    row.groupName = symbols[symbolName].groupName;
+    row.symbolName = symbolName;
+    row.symbolValue  = symbols[symbolName].value;
+    row.addEventListener('click', editSymbolDialog);
+
+    // Add some text to the new cells:
+    var coloredName = symbolName.replace(symbolNameFilter, function (x){return '<font color="red">'+x+'</font>'});
+    row.insertCell().innerHTML = symbols[symbolName].groupName;
+    row.insertCell().innerHTML = coloredName;
+    row.insertCell().innerHTML = symbols[symbolName].displayValue;
+
+    //limit amount of symbols
+    if (table.rows.length > 1024) {
+      var row = table.insertRow();
+      row.insertCell().innerHTML = "Truncated"
+      row.insertCell().innerHTML = "Truncated";
+      break
     }
   }
 

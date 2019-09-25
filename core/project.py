@@ -745,8 +745,8 @@ class Project:
 if __name__ == "__main__":
     import sys
     p = Project(sys.argv[1])
-    #print p.symbolize(int(sys.argv[2],16))
-    p.load_symbol_csv(sys.argv[2], "global")
+    print p.symbolize(int(sys.argv[2],16))
+    #p.load_symbol_csv(sys.argv[2], "global")
     #name = "Nexus 5 Bluetooth"
     #os.system("rm -rf /tmp/test_project")
 
