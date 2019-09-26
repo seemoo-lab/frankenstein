@@ -16,12 +16,17 @@ void hci_idle_loop() {
 }
 
 
+void GKI_enqueue();
+void GKI_os_malloc();
 void _start() {
     patch_code();
     idle_loop = hci_idle_loop;
 
     hci_attach();
     diag_sendLmpPktFlag = 0;
+
+    trace(GKI_enqueue, 4, true);
+    trace(GKI_os_malloc, 4, true);
 
 
     trace(btuarth4_RunRxStateMachines,1,true);

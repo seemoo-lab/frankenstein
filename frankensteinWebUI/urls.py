@@ -19,7 +19,9 @@ from frankensteinWebUI import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^newProject$', views.newProject, name='newProject'),
-    url(r'^editProject$', views.editProject, name='editProject'),
+    url(r'^project$', views.project, name='project'),
+    url(r'^emulate$', views.emulate, name='emulate'),
+
 
     url(r'^getProjectCfg$', views.getProjectCfg, name='getProjectCfg'),
     url(r'^projectSanityCheck$', views.projectSanityCheck, name='getProjectCfg'),

@@ -2,6 +2,15 @@
 
 extern int uart_DirectWrite(char *data, int len); //0x629a7 on CYW20735
 extern volatile int dc_ptu_uart_lsr; //0x360424 on CYW20735
+extern volatile int dp_uart_data;
+
+extern int uart_write(char *data, int len) {
+    for (int i=0; i < len; i++) {
+        dp_uart_data = data[i];
+        while ((dc_ptu_uart_lsr & 0xc) != 8); //Wait for data to be sent
+
+    }
+}
 
 /*
 We are using uart_DirectWrite to generate HCI events
@@ -13,9 +22,9 @@ void hci_xmit_event(char event_code, char *data, char len) {
     hci_hdr[0] = 0x04; //HCI Event
     hci_hdr[1] = event_code;
     hci_hdr[2] = len;
-    uart_DirectWrite(hci_hdr, 3);
-    uart_DirectWrite(data, len);
-
+    uart_write(hci_hdr, 3);
+    while ((dc_ptu_uart_lsr & 0xc) != 8); //Wait for data to be sent
+    uart_write(data, len);
     while ((dc_ptu_uart_lsr & 0xc) != 8); //Wait for data to be sent
 }
 
@@ -67,8 +76,29 @@ void hci_xmit_map_report(uint32_t ptr) {
     hci_xmit_event(0xfa, (char *)&ptr, 4);
 }
 
+
+/*
+I/O macros used in the fw
+*/
 #ifndef FRANKENSTEIN_EMULATION
     #define print(s) hci_puts(s)
+    char hex_chars[] = "0123456789abcdef";
+    void print_ptr(uint32_t p) {
+        char hex_str[] = "0x00000000";
+        char not_skip_prefix = 0;
+        char *c = hex_str+2;
+
+        for (int i=sizeof(uint32_t)-1; i>=0; i--) {
+            if (not_skip_prefix = not_skip_prefix | ((p>>(i*8)&0xff))) {
+                *(c++) = hex_chars[(p>>(i*8+4))&0xf];
+                *(c++) = hex_chars[(p>>(i*8))&0xf];
+            }
+        }
+        if (!not_skip_prefix) *(c++) = '0';
+        *(c++) = '\0';
+        print(hex_str);
+    }
+    #define print_var(x) {print(#x" = "); print_ptr((uint32_t)x); print("\n");}
 #endif
 
 

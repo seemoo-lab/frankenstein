@@ -14,9 +14,15 @@ In emulation, we can directly write to code
 /*
 patch code with "bx lr"
 */
-#ifdef FRANKENSTEIN_EMULATION
-    #define patch_return(x)  (*((uint16_t *)(x))) = 0x4770
-#endif
+#define patch_return(x) {                                   \
+    if (~(uint32_t)(x) & 0x2) { /* aligned */               \
+        write_code( ((uint32_t)(x)&~3)  ,                   \
+        0x00004770 | (((uint32_t)(x))&~1) &0xffff0000);     \
+    } else { /* misaligned jump */                          \
+        write_code( ((uint32_t)(x)&~3)  ,                   \
+        0x47700000 | (((uint32_t)(x))&~1) &0x0000ffff);     \
+    }                                                       \
+}
 
 /*
 installs a jump at a given address using "ldr pc, [pc]"

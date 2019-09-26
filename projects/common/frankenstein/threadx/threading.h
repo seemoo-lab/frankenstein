@@ -1,77 +1,95 @@
+#include <frankenstein/utils.h>
 
-extern void * _tx_thread_current_ptr;
-extern void * _tx_thread_execute_ptr;
-extern void * _tx_thread_system_state;
+/*
+This file implements the ThreadX context switch, as observed on the CYW20735.
+This is required to emulate multi threading in the emulator.
+_tx_thread_current_ptr is the current running thread, whereas _tx_thread_execute_ptr
+is the next thread, that was determined by the scheduler.
+After scheduling is done, _tx_thread_system_return_hook is invoked to perform the switch
+between those threads. This function is re-implemented here.
+*/
 
 
-//At this address a return from interrupt happens
-//This is replaced with our idle code
-#define idle_loop (*(void **)0x024de64)
-void _tx_thread_system_return_hook_payload() {
-    if (_tx_thread_execute_ptr == &g_pmu_idle_IdleThread) {
-        print("\033[;31mIdle\033[;00m\n");
-        if (idle_loop == (void *)0xfffffffd) {
-            print("\033[;31mIdle, do exit\033[;00m\n");
-            exit(0);
-        }
-    }
+extern uint32_t _tx_thread_current_ptr;
+extern uint32_t _tx_thread_execute_ptr;
+void (*print_thrd)(uint32_t) = NULL;
+
+/*
+Print message about the context switch
+*/
+void _tx_thread_system_return_debug() {
 
     print("\033[;31mContext switch ");
-    print_thrd(_tx_thread_current_ptr);
+    if (print_thrd)
+        print_thrd(_tx_thread_current_ptr);
+    else
+        print_ptr(_tx_thread_current_ptr);
+
     print(" -> ");
-    print_thrd(_tx_thread_execute_ptr);
+
+    if (print_thrd)
+        print_thrd(_tx_thread_execute_ptr);
+    else
+        print_ptr(_tx_thread_execute_ptr);
     print("\033[;00m\n");
 }
 
+/*
+In some cases scheduling is perfomed, but _tx_thread_system_return
+is not called.
+In the idle_loop, we can therefore enforce a context switch if desired.
+*/
 void contextswitch() {
     if (_tx_thread_current_ptr == _tx_thread_execute_ptr)
         return;
     _tx_thread_system_return();
 }
 
+/*
+Saves the current stack pointer int to _tx_thread_current_ptr and
+loads sp from _tx_thread_execute_ptr
+In addition we set the current thread to the execute one
+*/
+
+uint32_t _tx_thread_system_return_exchange_sp(uint32_t sp) {
+    *(uint32_t *)(_tx_thread_current_ptr+8) = sp;
+    sp = *(uint32_t*) (_tx_thread_execute_ptr+8); 
+    _tx_thread_current_ptr = _tx_thread_execute_ptr;
+    return sp;
+}
+
+/*
+ThreadX is using a SuperVisor Call to trigger a context switch.
+The handler was re-implemented according to the CYW20735B1.
+As it is a interrupt, what we do not support, we have to take
+care of the stack layout our selves.
+*/
 void _tx_thread_system_return_hook(void);
 asm(
         "_tx_thread_system_return_hook:\n"
 
-        //save state
+        //save registers
         "sub sp, #20\n"
-        "push {r0-r3,r12}\n" //Interrupt frame
-        "push {r4-r11}\n" //SVC Handler
-        "str lr, [sp, #52]\n"
+        "push {r0-r3,r12}\n"    //Interrupt frame
+        "push {r4-r11}\n"       //SVC handler registers
+        "str lr, [sp, #52]\n"   //location of lr
 
         //execute our hook payload
-        "push {lr}\n"
-        "bl _tx_thread_system_return_hook_payload\n"
-        "pop {lr}\n"
+        "bl _tx_thread_system_return_debug\n"
 
-        //load thread structs
-        "ldr r0, tx_thread_current_ptr\n"
-        "ldr r1, [r0]\n"
-        "ldr r2, tx_thread_execute_ptr\n"
-        "ldr r3, [r2]\n"
+        //swap th
+        "mov r0, sp\n"
+        //swap threads and sp
+        "bl _tx_thread_system_return_exchange_sp\n"
 
-        "str sp, [r1, #8]\n" //save sp to tx_thread_current_ptr
-
-        //swap threads
-        "str r3, [r0]\n"
-
-        //restore thread
-        "ldr r12, [r3, #8]\n" //get sp from tx_thread_execute_ptr
-        "ldr lr, [r12, #52]\n" //get saved lr
-        "mov sp, r12\n"
-        //"bl brk\n"
-        "pop {r4-r11}\n" //SVC Handler
+        //loat registers from next thread
+        "ldr lr, [r0, #52]\n" //get saved lr
+        "mov sp, r0\n"
+        "pop {r4-r11}\n"    //SVC handler regs
         "pop {r0-r3,r12}\n" //Interrupt frame
         "add sp, #20\n"
 
         //return
         "bx lr\n"
-
-        //static symbols :/
-        "tx_thread_current_ptr:\n"
-        ".word 0x201cec\n"
-        "tx_thread_execute_ptr:\n"
-        ".word 0x201cf0\n"
-
 );
 

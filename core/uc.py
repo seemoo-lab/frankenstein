@@ -1,5 +1,6 @@
 import sys
 from elftools.elf import elffile
+from elftools.elf.constants import SH_FLAGS
 from unicorn import *
 from unicorn import Uc, UcError, UC_ARCH_ARM, UC_MODE_THUMB, UC_MODE_ARM, arm_const
 from binascii import hexlify, unhexlify
@@ -14,7 +15,7 @@ class emu:
     """
     Loads ELF file to unicorn, sets watchpoints and stdin
     """
-    def __init__(self, fname, stdin, watchpoints=[], drcov=True):
+    def __init__(self, fname, stdin, watchpoints=[], drcov=True, emulator_base=None, fw_entry_symbol="cont"):
         self.stdin = stdin
         self.exception = ""
         self.uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
@@ -45,19 +46,38 @@ class emu:
         self.stdout = ""
         self.stderr = ""
 
+        self.emulator_base_start = None
+        self.emulator_base_stop = None
+        self.fw_entry = self.symbols["cont"] # ignore everything until that symbol
+
         #loading prog headrs
         self.state = []
-        for i in xrange(self.elf.num_segments()):
-            s = self.elf.get_segment(i)
-            if s.header["p_type"] == "PT_LOAD":
-                addr = s.header["p_vaddr"]
-                data = s.data()
-                size = s.header["p_memsz"]
-                print "loading", hex(addr), size
-                self.uc.mem_map(addr, self.pagreesize(size), UC_PROT_ALL)
+        self.segments = []
+        for i in xrange(self.elf.num_sections()):
+            section = self.elf.get_section(i)
+            if section.header["sh_flags"] & SH_FLAGS.SHF_ALLOC != 0:
+                addr = section.header["sh_addr"]
+                size = self.pagreesize(section.header["sh_size"])
+                name = section.name
+
+                #NOBITS sections contains no data in file
+                #Will be initialized with zero
+                if section.header["sh_type"] == "SHT_NOBITS":
+                    data = "\x00" * size
+                else:
+                    data = section.data()
+
+                print("Loading %s @ 0x%x - 0x%x (%d bytes)" % (name, addr, addr+len(data), len(data)))
+                self.uc.mem_map(addr, size, UC_PROT_ALL)
                 self.uc.mem_write(addr, data)
+                if emulator_base == addr:
+                    self.emulator_base_start = emulator_base
+                    self.emulator_base_stop = emulator_base + size
+                else:
+                    self.segments += [(name, addr, size)]
                 self.state += [(addr, size, data)]
 
+            self.segments = sorted(self.segments, key=lambda x:x[0])
 
 
         #stack
@@ -124,13 +144,16 @@ class emu:
     """
     @staticmethod
     def hook_bb(uc, address, size, self):
-        if address >= 0xbeee000 and address < 0xbeef000 + 0x80000: #XXX
+        if address >= self.emulator_base_start and address < self.emulator_base_stop:
             return
         self.coverage_bb.add((address, size))
 
     @staticmethod
     def hook_code(uc, address, size, self):
-        if address >= 0xbeee000 and address < 0xbeef000 + 0x80000: #XXX
+        if address & 0xfffffffe == self.fw_entry & 0xfffffffe:
+            self.trace_init_state()
+
+        if address >= self.emulator_base_start and address < self.emulator_base_stop:
             return
 
         self.coverage_pc.add(address)
@@ -145,7 +168,7 @@ class emu:
     @staticmethod
     def hook_mem_access(uc, access, address, size, value, self):
         pc = self.uc.reg_read(arm_const.UC_ARM_REG_R15)
-        if pc >= 0xbeee000 and pc < 0xbeef000 + 0x80000: #XXX
+        if pc >= self.emulator_base_start and pc < self.emulator_base_stop:
             return
         if access == UC_MEM_WRITE:
             self.write.add((pc, address, value))
@@ -171,8 +194,16 @@ class emu:
         Dump Registers
         Do Memory Dump
     """
+    def trace_init_state(self):
+        self.state = []
+        for name, addr, size in self.segments:
+            data = self.uc.mem_read(addr, size)
+            data = map(chr, data)
+            self.state += [(addr, size, data)]
+        
+
     def trace_state_change(self, reason):
-        print reason
+        print(reason)
         new_state = []
         memdiff = []
         for addr, size, data in self.state:
@@ -239,12 +270,12 @@ class emu:
             new_data = self.uc.mem_read(addr, size)
             new_data = map(chr, new_data)
             current_offset = 0
+            print len(data), len(new_data), size
 
             #for each hexdump row
             while current_offset <  size:
                 old_row = data[current_offset: current_offset+block_size]
                 new_row = new_data[current_offset: current_offset+block_size]
-
                 #ugly equal comparison
                 equal = True
                 for x,y in zip(new_row, old_row):
@@ -312,16 +343,16 @@ class emu:
     """
     def run(self, timeout=300):
         try:
-            print "runing until exit @ 0x%x" % self.symbols["exit"]
+            print("runing until exit @ 0x%x" % self.symbols["exit"])
             self.uc.emu_start(self.elf.header.e_entry, self.symbols["exit"], timeout=timeout*UC_SECOND_SCALE)
             self.trace_state_change("Exit")
         except KeyboardInterrupt:
             sys.exit(1)
         except Exception as e:
             self.exception = str(e)
-            print e
+            print(e)
             import traceback; traceback.print_exc()
-            print hex(self.uc.reg_read(arm_const.UC_ARM_REG_PC))
+            print(hex(self.uc.reg_read(arm_const.UC_ARM_REG_PC)))
             self.trace_state_change(str(e))
 
     def run_qemu(self):

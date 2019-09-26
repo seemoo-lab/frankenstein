@@ -93,7 +93,7 @@ class Project:
 
     def save(self):
         with open("%s/project.json" % self.path, "w") as f:
-            data = json.dumps(self.cfg, indent=4)
+            data = json.dumps(self.cfg, indent=4, sort_keys=True)
             f.write(data)
         self.create_build_scripts()
 
@@ -745,8 +745,8 @@ class Project:
 if __name__ == "__main__":
     import sys
     p = Project(sys.argv[1])
-    #print p.symbolize(int(sys.argv[2],16))
-    p.load_symbol_csv(sys.argv[2], "global")
+    print p.symbolize(int(sys.argv[2],16))
+    #p.load_symbol_csv(sys.argv[2], "global")
     #name = "Nexus 5 Bluetooth"
     #os.system("rm -rf /tmp/test_project")
 

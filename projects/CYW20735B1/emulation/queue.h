@@ -1,7 +1,7 @@
 #include <frankenstein/hook.h>
 
 struct queue_access {
-    void *thread;
+    uint32_t thread;
     uint32_t queue;
     uint32_t lr;
 };
@@ -131,7 +131,7 @@ void queue_add_hooks() {
     add_hook(_tx_queue_front_send, &queue_write_access, NULL, NULL);
 
 
-    //add_hook(&slist_get, &slist_read_access, NULL, NULL); //Too short + misaligned
+    //add_hook(&slist_get, &slist_read_access, NULL, NULL);  //Too short + misaligned
     //add_hook(&slist_tail, &slist_read_access, NULL, NULL); // Function too short
     add_hook(&slist_front, &slist_read_access, NULL, NULL);
 
