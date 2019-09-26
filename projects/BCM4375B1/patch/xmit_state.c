@@ -5,6 +5,7 @@
 
 //void wiced_hal_wdog_disable();
 struct hook *xmit_hook;
+int rand();
 
 void xmit_memory(struct saved_regs *regs, int cont) {
     //Ensure nothing interrupts us
@@ -15,13 +16,14 @@ void xmit_memory(struct saved_regs *regs, int cont) {
     //This will skip the post_hook handler and prevents the hook
     //from beeing re-installed
     //It is also required to 
-    *(uint32_t*)xmit_hook = 0xf018f8df;
+    //*(uint32_t*)xmit_hook = 0xf018f8df;
 
     //Notify the host, that a firmware start is comming
     //Also export the entry point that way
     hci_xmit_state_notify(regs, cont);
 
-    hci_xmit_segment(0x0,      0x140000);
+    hci_xmit_segment(0x0,        0x140000);
+    //hci_xmit_segment(0x0,      0x140000);
     //hci_xmit_segment(0x160000, 0x180000);
     //hci_xmit_segment(0x200000, 0x288100);
     //hci_xmit_segment(0x300000, 0x308000);

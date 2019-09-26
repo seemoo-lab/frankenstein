@@ -1,24 +1,26 @@
 {
+    "config": {
+        "EMULATION_CFLAGS": "-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I ../common  -I /usr/include -D FRANKENSTEIN_EMULATION", 
+        "EMULATION_CODE_BASE": 200208384, 
+        "PATCH_CFLAGS": "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../common", 
+        "PATCH_CODE_BASE": 2562560, 
+        "TOOLCHAIN": "arm-none-eabi-", 
+        "thumb_mode": true
+    }, 
     "segment_groups": {
         "default": {
-            "active": true, 
-            "symbols": {}, 
-            "segments": {}
+            "active": false, 
+            "segments": {}, 
+            "symbols": {}
         }
     }, 
     "symbols": {
+        "dc_ptu_uart_lsr": 3540004, 
+        "dp_uart_data": 3538972, 
         "patchram_address_table": 3211264, 
-        "patchram_enable": 3212292, 
         "patchram_data_table": 1441792, 
-        "uart_DirectWrite": 711657, 
-        "dc_ptu_uart_lsr": 3540004
-    }, 
-    "config": {
-        "EMULATION_CFLAGS": "-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I ../common  -I /usr/include -D FRANKENSTEIN_EMULATION", 
-        "TOOLCHAIN": "arm-none-eabi-", 
-        "PATCH_CODE_BASE": 2562560, 
-        "thumb_mode": true, 
-        "EMULATION_CODE_BASE": 200208384, 
-        "PATCH_CFLAGS": "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../common"
+        "patchram_enable": 3212292, 
+        "uart_DirectWrite": 712617, 
+        "uart_DirectWrite_1": 711657
     }
 }
