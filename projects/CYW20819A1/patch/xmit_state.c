@@ -107,18 +107,7 @@ void xmit_memory(struct saved_regs *regs, int cont) {
         Found Map 0x23dc1900 - 0x23dc2000
         Found Map 0x23dc3400 - 0x23dc4a00
         Found Map 0x23dc4e00 - 0x23dc5700
-
-        TODO i think it was running until 0x41.... without further results
-        TODO restarted it at 0x40000000 and it didn't find something
     */
-
-    //Those segments seem not to be relevant
-    //hci_xmit_segment(0x20000000, 0x20250000);
-    //hci_xmit_segment(0x20270000, 0x20284000);
-    //hci_xmit_segment(0x20500000, 0x20600000);
-    //hci_xmit_segment(0x22000000, 0x24000000);
-    //hci_xmit_segment(0x40000000, 0x40004000);     //base_ToRam_alias_adr
-    //hci_xmit_segment(0x42000000, 0x42080000);    //base_ToRam_bit_band_adr
 
     hci_xmit_segment(0xe0000000, 0xe0100000);    //ppb
 

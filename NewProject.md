@@ -248,10 +248,31 @@ arm-none-eabi-ld: cannot find gen/internalBlue_11.07.2019_13.52.37/Segment_0x420
 make: *** [Makefile:28: gen/execute.exe] Error 1
 ```
 
-Happens due to executing as root to access hci0 on Linux:
+Happens due to executing as root to access hci0 on Linux, we need to change permissions on this file:
 ```
  './segment_groups/internalBlue_11.07.2019_13.52.37': Permission denied
 ```
+
+Afterwards, the following registers are missing:
+
+```
+dc_nbtc_clk = 0x00318088;
+dc_x_clk = 0x003186ac;
+pcx_btclk = 0x0031822c;
+pcx2_btclk = 0x0031823c;
+pcx2_pbtclk = 0x00318238;
+phy_status = 0x00314004;
+pkt_hdr_status = 0x00318b28;
+pkt_log = 0x00318b2c;
+rtx_dma_ctl = 0x00314018;
+rtx_mem_start1 = 0x00370400;
+rtx_rx_buffer = 0x00370c00;
+sr_status = 0x0031400c;
+sr_ptu_status_adr4 = 0x00360084;
+tx_pkt_info = 0x00318acc;
+tx_pkt_pyld_hdr = 0x00318ad0;
+```
+
 
 Debugging notes
 ---------------
