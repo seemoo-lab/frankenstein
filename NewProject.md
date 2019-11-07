@@ -18,7 +18,8 @@ Build environment
   * Symbols are in `~/Documents/ModusToolbox_1.1/libraries/bt_20819A1-1.0/components/BT-SDK/20819-A1_Bluetooth/
     WICED/internal/20819A1/patches/patch.elf`.
   * Click on *Load ELF* and add them.
-  * Load *Symbols* and *Segments* to *default*.
+  * Load *Symbols* and *Segments* to *global*. It is important to set them to *global*, otherwise, these symbols 
+    will only apply to one specific memory dump.
      * For me, adding Segments were wrong! The Segments in the `patch.elf` were not useful. 
        Better create a large dummy segment.
      * ... but importing Symbols only worked. 
@@ -26,15 +27,19 @@ Build environment
   the files `20719mapb0.h`, `20739mapb0.h` and `20703mapa0.h`. We do not have them in *Modus Toolbox*, but most
   of them stay the same over a long time. So we can carefully copy those variables that we need in the next step for
   compilation.
-  Add the following variables via the *Frankenstein* Web UI:
-    * `dp_uart_data` at 0x0036001c
-    * `dc_ptu_uart_lsr` at 	0x00360424
+  Add the following *global* variables via the *Frankenstein* Web UI:
+  
+  ```
+    dp_uart_data = 0x0036001c;
+    dc_ptu_uart_lsr = 0x00360424;
+  ```
+    
 * Create the `patch` directory and copy `CYW20735B1/patch/hello.c`.
 * Run `make all -C projects/CYW20819A1/`
 * ...it builds! Ship it! :D
 
-Running patches on the evaluation board
----------------------------------------
+Running patches on the evaluation board (`hello` patch)
+-------------------------------------------------------
 * It won't run though, memory addresses need to be fixed.
 * In the *Frankenstein* Web UI, click on *Edit Config* and set `PATCH_CODE_BASE` to a reasonable value, i.e.,
   `0x20A000`. While the evaluation board does not have any memory protection and code can be written and executed
@@ -72,14 +77,14 @@ When everything works, the output should be:
 ```
 
 
-xmit_state patch
----------------
+`xmit_state` patch
+------------------
 
 Before being able to start emulation, we need to somehow be able to get a state from
 that on we want to do our emulation and fuzzing.
 
 Copy `patch/xmit_state.c` from the CYW20735B1 to the CYW20819A1 project.
-Add missing symbols to project via *Frankenstein* Web UI:
+Add missing *global* symbols to project via *Frankenstein* Web UI:
 
 
     patchram_address_table = 0x310000;
@@ -159,21 +164,94 @@ Found Map 0x640000 - 0x640800
 
 Dying at `0x650f00` is kind of expected, that's coexistence registers and they might not be blocked for writing
 despite not being properly initialized. We saw some other crashes related to the `0x650nnn` area.
-Anyway, let's now go and put these into `xmit_state.c`.
+Anyway, let's now go and put these into `xmit_state.c`. Afterwards, `xmitstate` will succeed:
 
+``` 
+...
+[*] Received segment 0x650000 - 0x651000
+[*] Received segment 0xe0000000 - 0xe0100000
+[*] Received fuill firmware state
+```
+
+
+The latest `xmitstate` result will be displayed as active in the *Frankenstein* Web UI. Just navigate to
+http://127.0.0.1:8000/project?projectName=CYW20819A1 and reload the page.
+Now, rebuild the project:
+      
+      make all -C projects/CYW20819A1
+
+If things break here, you might have screwed up with segment definitions, global vs. default scope, or similar.
+
+
+`heap_sanitizer` patch
+----------------------
+
+Compiled after removing `memcpy_r`, so that one doesn't exist on the CYW20819A1.
+If you have symbols, do a quick check that you didn't miss any `memcpy` instruction.
+In our case, nothing was added.
+
+```
+~/Documents/ModusToolbox_1.1$ readelf -a -W libraries/bt_20819A1-1.0/components/BT-SDK/20819-A1_Bluetooth/WICED/internal/20819A1/patches/patch.elf | grep memcpy
+   535: 00006d31     0 FUNC    GLOBAL DEFAULT  ABS memcpy
+  1377: 0001845f     0 FUNC    GLOBAL DEFAULT  ABS sfi_memcpy
+  3602: 000477d1     0 FUNC    GLOBAL HIDDEN   ABS __aeabi_memcpy4
+  3603: 000477d1     0 FUNC    GLOBAL DEFAULT  ABS __aeabi_memcpy8
+  3604: 000477d1     0 FUNC    GLOBAL DEFAULT  ABS __rt_memcpy_w
+  3605: 00047819     0 FUNC    GLOBAL DEFAULT  ABS _memcpy_lastbytes_aligned
+  4209: 00054687     0 FUNC    GLOBAL HIDDEN   ABS __aeabi_memcpy
+  4210: 00054687     0 FUNC    GLOBAL DEFAULT  ABS __rt_memcpy
+  4211: 000546ed     0 FUNC    GLOBAL DEFAULT  ABS _memcpy_lastbytes
+  5733: 0007d747     0 FUNC    GLOBAL DEFAULT  ABS mpaf_memcpy
+  6802: 00097ed5     0 FUNC    GLOBAL DEFAULT  ABS utils_memcpy8_postinc
+  6803: 00097f21     0 FUNC    GLOBAL DEFAULT  ABS utils_memcpy8
+  6804: 00097f59     0 FUNC    GLOBAL DEFAULT  ABS utils_memcpy3dword
+  6807: 00097fa9     0 FUNC    GLOBAL DEFAULT  ABS utils_memcpy10
+  8361: 000b67d1     0 FUNC    GLOBAL DEFAULT  ABS __ARM_common_memcpy4_5
+  8516: 000ba075     0 FUNC    GLOBAL DEFAULT  ABS __ARM_common_memcpy4_10
+```
+
+...and then run it.
+
+``` 
+> loadelf projects/CYW20819A1/gen/heap_sanitizer.patch
+```
+
+__TODO:__
+I think we need to call `_start` for the patch to become
+effective, but this crashes. The patch can be loaded without crashing, but once the entry
+point is executed, the firmware silently crashes.
+...even when I remove everything from the `_start` function and double check that it is
+just `bx lr`, before its execution everything is well and afterwards it gets non-responsive.
+
+Minimal working example: even without patches, writing to the address `0x20a5dc` and executing it crashes.
+Why is this even used?
+
+`PLATFORM_DIRECT_LOAD_BASE_ADDR      := 0x20A000`
+
+...so far so good.
+
+`PLATFORM_APP_SPECIFIC_STATIC_LEN    ?= 1024`
+
+Which adds up to `0x20a400`. So this patch might probably just exceed the maximum patch length on CYW20819A1.
 
 
 
 Emulation
 ---------
-* Add a binary to the project that you dumped with *InternalBlue* `dumpmem` previously.  
-    * `sudo python2 internalBlueMod.py`
-    * `dumpmem --file cyw20819a1.bin`
-    * If you are going for a completely new chip, you might need to change the memory definitions in
-      `internalblue/fw/fw_0x...py`.
-      
 
+Start with copying `emulation/execute.c` from the CYW20735B1.
+Also copy `emulation/[bcs,common,dynamic_memory,fwdefs,hci,lm,queue,timer].h` and `emulation/bcs/[acl,inq,le,page].h`,
+as these things are not yet moved cleanly into `/projects/common/`.
 
+```
+arm-none-eabi-ld: cannot find gen/internalBlue_11.07.2019_13.52.37/Segment_0x420000.segment.o
+make: *** [Makefile:28: gen/execute.exe] Error 1
+```
+
+Happens due to executing as root to access hci0 on Linux:
+```
+ './segment_groups/internalBlue_11.07.2019_13.52.37': Permission denied
+```
 
 Debugging notes
 ---------------
@@ -194,8 +272,8 @@ With invalid `PLATFORM_DIRECT_LOAD_BASE_ADDR`:
 ```
 
 
-- crashes in LR 0x0000f095 = btuarth4_HandleLaunch_RAM just at BLX R4
-- PC 0x4240000 (not sure if valid?!), R4 is 0x002301cd
+* crashes in LR 0x0000f095 = btuarth4_HandleLaunch_RAM just at BLX R4
+* PC 0x4240000 (not sure if valid?!), R4 is 0x002301cd
 
 Corrected `PLATFORM_DIRECT_LOAD_BASE_ADDR`:
 ```
@@ -248,3 +326,31 @@ of eval boards supported:
     #define dc_ptu_uart_lsr_adr   0x00360424                   // uart_base + 0x00000024
 
 ...so the values above were probably caused by a double hex conversion.
+
+
+Some compiler stuff seems also to be weird.
+
+```
+/usr/include/bits/socket.h:354:11: fatal error: asm/socket.h: No such file or directory
+ # include <asm/socket.h>
+           ^~~~~~~~~~~~~~
+```
+
+Can be solved with:
+``` 
+cd /usr/include/
+sudo ln -s asm-generic/ asm
+```
+
+
+I used default instead of global scope and then didn't know how to modify it except from writing
+directly to `project.json`. So I just re-created the project. In that case, somehow the `segment_groups`
+folder got lost, probably because I also didn't create the 0x0 segment it was never created by the scripts.
+Fixed by adding a folder `projects/CYW20819A1/segment_groups/` by hand.
+
+```
+  ...
+  File "/home/jiska/seemoo/research/bluetooth/frankenstein/core/project.py", line 254, in add_group
+    os.mkdir(group_path)
+OSError: [Errno 2] No such file or directory: 'projects/CYW20819A1/segment_groups/internalBlue_11.07.2019_13.42.01'
+```

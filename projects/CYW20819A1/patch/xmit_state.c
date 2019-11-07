@@ -23,21 +23,22 @@ void xmit_memory(struct saved_regs *regs, int cont) {
 
     //Send the memory maps to host
     hci_xmit_segment(0x0       , 0x00280000);   //Rom, MemCm3 volatile, MemPrc
-    hci_xmit_segment(0x00300000, 0x00308000);   //base_hw_regs_cm3_adr
-    hci_xmit_segment(0x00310000, 0x00322000);
-    hci_xmit_segment(0x00326000, 0x00330000);
-    hci_xmit_segment(0x00338000, 0x00340000);
+    hci_xmit_segment(0x00300000, 0x00308000);   //base_hw_regs_cm3 (dma, etc.)
+    hci_xmit_segment(0x00310000, 0x00322000);   //prc_brk
+    hci_xmit_segment(0x00326000, 0x00330000);   //??
+    hci_xmit_segment(0x00338000, 0x00340000);   //mia (whatever this is, got imported from /projects/BCM20739_A0_ext1/
+                                                //  users/yunlu/bcm20739a0/v_2015_0123_fpga/dip/mia/ver/param/mia_adrmap.h+mia_adr_base)
     hci_xmit_segment(0x00341000, 0x00342000);
     hci_xmit_segment(0x00350000, 0x00368000);
     hci_xmit_segment(0x00370000, 0x00380000);   //base_rtx_fifo_adr
     hci_xmit_segment(0x00390000, 0x00398000);   //base_power_WD_adr
-    hci_xmit_segment(0x00404000, 0x00408000);
+    hci_xmit_segment(0x00404000, 0x00408000);   //base_ef_regs
     hci_xmit_segment(0x00410000, 0x00414000);   //base_bt_modem_regs_adr
     hci_xmit_segment(0x00420000, 0x00424000);   //base_fm_modem_regs_adr
     hci_xmit_segment(0x00430000, 0x00434000);   //base_mac154_top_adr
     hci_xmit_segment(0x00440000, 0x00444000);   //base_seceng_top_adr
     hci_xmit_segment(0x00450000, 0x00454000);   //base_capscan_top_adr
-    hci_xmit_segment(0x00500000, 0x00541000);   //???
+    hci_xmit_segment(0x00500000, 0x00541000);   //base_epm_ram
     hci_xmit_segment(0x00580000, 0x00600800);
     hci_xmit_segment(0x00640000, 0x00640800);   //base_clb_regs XXX not in memory map
     hci_xmit_segment(0x00650000, 0x00651000);   //gci_regs_adr_base XXX not in memory map
@@ -108,6 +109,7 @@ void xmit_memory(struct saved_regs *regs, int cont) {
         Found Map 0x23dc4e00 - 0x23dc5700
 
         TODO i think it was running until 0x41.... without further results
+        TODO restarted it at 0x40000000 and it didn't find something
     */
 
     //Those segments seem not to be relevant
