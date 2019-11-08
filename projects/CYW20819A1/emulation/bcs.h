@@ -230,29 +230,29 @@ void bcs_tick() {
     bcs_advance_clock();
 
     //bcs_info();
-    if (tb == 0x2822e0) //TODO
+    if (tb == pageScanTaskStorage)
         { print("tb = pageScan\n"); pagescan(); }
-    else if (tb == 0x20a9c8) //TODO
+    else if (tb == pageTaskStorage)
         {print("tb = page\n");  page(); }
-    else if (tb == 0x282250) //TODO
+    else if (tb == inqScanTaskStorage)
         print("tb = inqScan\n")
-    else if (tb == 0x20a8e8) //TODO
+    else if (tb == inqTaskStorage)
         { print("tb = inq\n"); inquiry(); }
-    else if (tb == 0x205914) //TODO
+    else if (tb == g_tca_taskVars)
         { print("tb = tca\n"); bcs_dummy(); }
     else if (tb == 0x281068) //TODO
         { print("tb = acl\n"); acl(); }
     else if (tb == 0x22539c) //TODO
         { print("tb = conntask?\n"); bcs_dummy(); }
-    else if (tb == 0x28218c) //TODO
+    else if (tb == afhRssiScanTaskStorage)
         { print("tb = afhRssiScan\n");}
 
     //LE
-    else if (tb == 0x2828b0) //TODO
+    else if (tb == bcsulp_advTaskStorage)
         { print("tb = adv\n"); adv();}
-    else if (tb == 0x283300) //TODO
+    else if (tb == bcsulp_scanTaskStorage)
         { print("tb = bcsulp_scan\n"); le_scan();}
-    else if (tb == 0x283278) //TODO
+    else if (tb == bcsulp_initTaskStorage)
         { print("tb = bcsulp_init\n"); le_scan();}//page_fd = 0; pagescan(); page_fd=-1;}
     else if (tb == 0x281618) //TODO
         { print("tb = le_conn\n"); le_conn();}
@@ -263,7 +263,7 @@ void bcs_tick() {
     //Slot01 / Slot11
     if ((pcx_btclk & 3) == 0b01){
         print("Slot01\n");
-        sr_status =  (tb == 0x281068) ? 0x1d8 : 0x1c8;
+        sr_status =  (tb == 0x281068) ? 0x1d8 : 0x1c8; //TODO is that in ram?
         phy_status = 0x10;
         bluetoothCoreInt_C();
         contextswitch();
@@ -287,13 +287,12 @@ void bcs_add_hooks() {
     #endif
 
     patch_return(btclk_DelayXus);
+    patch_return(btclk_DelayXus+0x18); //label within that function that seems to get called, same offset in CYW20735 and CYW20819
     patch_return(btclk_AdvanceNatClk_clkpclkHWWA);
-    patch_return(0x0009b104); //TODO
-    patch_return(0x0009b38a); //TODO
-    patch_return(0x0009b35c); //TODO
-    patch_return(0x9b414);    //TODO
-    patch_return(0x9b3da);    //TODO
-    patch_return(0x40cda);    //TODO
+    patch_return(btclk_AdvanceNatClk_clkpclkHWWA+0x2e); //similar relative label
+    patch_return(btclk_AdvanceSysClk_clkpclkHWWA);
+    patch_return(btclk_AdvanceSysClk_clkpclkHWWA+0x3a);
+    patch_return(_afhPipelineRssiScanTaskSlotInt);
     //patch_return(&_afhPipelineRssiScanTaskSlotInt);
 
     trace(bcs_dmaGetRxBuffer, 3, false);
@@ -370,6 +369,7 @@ void bcs_add_hooks() {
     trace(bpl_lcu_Cmd, 2, false);
     trace(bpl_lcu_setPHY, 4, false);
     trace(bcs_kernelBtProgIntEnable, 4, false);
+    trace(bcs_kernelBtProgIntIsEnabled, 4, false);
 
     trace(bcs_pageTaskCreate, 3, false);
     trace(bcs_pageScanTaskCreate, 3, false);

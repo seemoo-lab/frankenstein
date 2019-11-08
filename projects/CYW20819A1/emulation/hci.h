@@ -130,22 +130,23 @@ void hci_rx_poll(int timeout_ms) {
     interruptvector_PTU();
 
     //the UART interface seems to have a DMA like receive
-    char state = *(char *)(0x249f70 + 0xd); //rx_machine state //TODO
+    // g_uart_DriverState points to 0x249F70 on CYW20735, but to 0x220B20 on CYW20819
+    char state = *(char *)(&g_uart_DriverState + 0xd); //rx_machine state //TODO remove todo once we know that this is the correct reference
     print_var(state);
     if (state == 6) {
-        void *data_ptr = *(void **)(0x249f70 + 0x10); //rx_data_ptr //TODO
-        uint32_t len = *(uint32_t *)(0x249f70 + 0x14); //rx_len //TODO
+        void *data_ptr = *(void **)(&g_uart_DriverState + 0x10); //rx_data_ptr //TODO
+        uint32_t len = *(uint32_t *)(&g_uart_DriverState + 0x14); //rx_len //TODO
         int ret;
         print_var(data_ptr);
         print_var(len);
         print("\033[;32mRx DMA ");
         for (ret = -1; ret < 0; ret = read(hci_rx_fd, data_ptr, len));
-        *(uint32_t*)(0x249f70 + 0x3c) = ret; //TODO
+        *(uint32_t*)(&g_uart_DriverState + 0x3c) = ret; //TODO
         hexdump(data_ptr, len);
         print("\033[;00m\n");
-        print_var(*(uint32_t*)(0x249f70 + 0x3c)); //TODO
+        print_var(*(uint32_t*)(&g_uart_DriverState + 0x3c)); //TODO
         //interruptvector_DMA_DONE(); //XXX this is the actual interrupt handler called invoking uart_ReceiveDMADoneInterrupt
-        uart_ReceiveDMADoneInterrupt(0x249f70); //Invoking isr directly //TODO
+        uart_ReceiveDMADoneInterrupt(&g_uart_DriverState); //Invoking isr directly //TODO
     }
 
 }

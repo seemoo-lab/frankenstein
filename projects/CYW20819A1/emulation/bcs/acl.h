@@ -7,6 +7,8 @@ int acl_role = ACL_ROLE_SLAVE; //the snapshot I've taken had an open acl slave c
 
 int injected = 0;
 
+extern volatile int rtx_mem_start1;
+
 void acl() {
     if (acl_fd == -1) return;
 

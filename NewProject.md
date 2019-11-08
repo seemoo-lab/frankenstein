@@ -273,11 +273,17 @@ tx_pkt_info = 0x00318acc;
 tx_pkt_pyld_hdr = 0x00318ad0;
 ```
 
+Currently, various tasks and structures are hardcoded.
+Locate and replace these.
+
 
 Debugging notes
 ---------------
 
 Just to show the workflow when something is not working :)
+Basic ideas of how to analyze issues with IDA, gdb and the *InternalBlue* stackdumps etc.
+
+---
 
 With invalid `PLATFORM_DIRECT_LOAD_BASE_ADDR`:
 ```
@@ -348,6 +354,7 @@ of eval boards supported:
 
 ...so the values above were probably caused by a double hex conversion.
 
+---
 
 Some compiler stuff seems also to be weird.
 
@@ -363,6 +370,7 @@ cd /usr/include/
 sudo ln -s asm-generic/ asm
 ```
 
+---
 
 I used default instead of global scope and then didn't know how to modify it except from writing
 directly to `project.json`. So I just re-created the project. In that case, somehow the `segment_groups`
@@ -375,3 +383,78 @@ Fixed by adding a folder `projects/CYW20819A1/segment_groups/` by hand.
     os.mkdir(group_path)
 OSError: [Errno 2] No such file or directory: 'projects/CYW20819A1/segment_groups/internalBlue_11.07.2019_13.42.01'
 ```
+
+---
+
+Without redefining all symbols and escaping some special situations, you might run into weird
+crashes like this one:
+
+``` 
+$ qemu-arm projects/CYW20819A1/gen/execute.exe 
+lr=0x20a68d eir_handleRx(0x20c668);
+lr=0x07990b bcs_kernelBtProgIntEnable(0x02, 0x02, 0x02, 0x50);
+lr=0x04b951 bcs_kernelSlotCbFunctions()lr=0x0bf003bd bcs_SlotCbFunctions()lr=0x01fba9 lm_sendInqFHS(0x202d04)lr=0x0bf01159 dynamic_memory_AllocatePrivate(0x200498, 0x0, 0x0);
+qemu: uncaught target signal 4 (Illegal instruction) - core dumped
+Illegal instruction
+```
+
+Debugging works as follows:
+```qemu-arm -g 31337 projects/CYW20819A1/gen/execute.exe```
+
+In a new window, start `gdb`.
+
+``` 
+(gdb) target remote 127.0.0.1:31337
+Remote debugging using 127.0.0.1:31337
+
+### (... some IDA magic to find out where we are roughly crashing)
+
+(gdb) break *0x1F66
+Breakpoint 4 at 0x1f66
+(gdb) continue
+Continuing.
+
+Breakpoint 4, 0x00001f66 in ?? ()
+(gdb) stepi
+0x0007ec9e in ?? ()
+(gdb) info r
+r0             0x200498 2098328
+r1             0x21     33
+r2             0x20     32
+r3             0x3      3
+r4             0x200498 2098328
+r5             0x2106bc 2164412
+r6             0x0      0
+r7             0x200da8 2100648
+r8             0x73c76  474230
+r9             0x2      2
+r10            0x7800   30720
+r11            0x200de4 2100708
+r12            0x18     24
+sp             0x200350 0x200350
+lr             0x1f6b   8043
+pc             0x7ec9e  0x7ec9e
+cpsr           0x20000030       536870960
+(gdb) stepi
+
+Program received signal SIGILL, Illegal instruction.
+0x0007ec9e in ?? ()
+(gdb) 
+```
+
+So this happened within the following function, that is called by `dynamic_memory_AllocateOrDie`:
+
+``` 
+code_rom:000A43EE             synch_GetXPSRExceptionNumber            ; CODE XREF: dynamic_memory_AllocateOrDie+26↑p
+code_rom:000A43EE                                                     ; dynamic_memory_AllocateOrReturnNULL+26↑p ...
+code_rom:000A43EE EF F3 03 80                 MRS.W   R0, XPSR
+code_rom:000A43F2 4F EA 00 60                 MOV.W   R0, R0,LSL#24
+code_rom:000A43F6 4F EA 10 60                 MOV.W   R0, R0,LSR#24
+code_rom:000A43FA 70 47                       BX      LR
+code_rom:000A43FA             ; End of function synch_GetXPSRExceptionNumber
+```
+
+This function can simply be disabled. It was already defined to be skipped but the address
+of this function was hard coded in our case. Exceptions are located in `common.h` and disabled
+via `patch_return(synch_GetXSPRExceptionNum)`.
+Overall, most functions that do not work out to be emulated can just be disabled.

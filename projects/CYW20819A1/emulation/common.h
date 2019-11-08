@@ -97,7 +97,7 @@ void _tx_v7m_set_int(uint32_t);
 uint32_t _tx_v7m_get_int();
 
 
-void synch_GetXSPRExceptionNum();
+void synch_GetXPSRExceptionNumber();
 void osapi_interruptContext();
 void btclk_AdvanceNatClk_clkpclk();
 
@@ -112,8 +112,8 @@ void patch_code() {
     //patch_jump(osapi_interruptContext, _tx_thread_system_return);
     //patch_return(osapi_interruptContext);
 
-    //Functions, we do not support
-    patch_return(0xa43ee);  //synch_GetXSPRExceptionNum //TODO
+    //Functions that we do not support and can disable without severe side effects
+    patch_return(&synch_GetXPSRExceptionNumber);
     patch_return(0x20ffb2); //get_and_disable_int 2nd ed?! //TODO
     patch_return(btclk_DelayXus);
     patch_return(btclk_Wait4PclkChange);

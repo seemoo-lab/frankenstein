@@ -1,3 +1,7 @@
+/*
+   This file defines commonly used functions and variables that are provided by the
+   firmware and used within our patches.
+*/
 #ifndef FWDEFS_H
 #define FWDEFS_H
 
@@ -328,6 +332,8 @@ clk
 */
 int btclk_GetSysClk_slot(void *);
 int btclk_GetSysClk_clk(void *);
+int btclk_AdvanceNatClk_clkpclkHWWA(void *);
+int btclk_AdvanceSysClk_clkpclkHWWA(void *, void *);
 
 /*
 bcs
@@ -392,6 +398,7 @@ void bcs_kernelTimerTick();
 void bcs_kernelBlock();
 void bcs_kernelFsmSetup();
 void bcs_kernelBtProgIntEnable();
+void bcs_kernelBtProgIntIsEnabled();
 
 void bcs_taskUnblock(int);
 void bcs_SlotCbFunctions();
@@ -400,7 +407,6 @@ int btclk_DelayXus(int us);
 void bcs_utilBbRxPyldHdr();
 
 void btclk_Wait4PclkChange(int, int);
-void btclk_AdvanceNatClk_clkpclkHWWA();
 void intctl_ClrPendingInt();
 void *dhmulp_getTxBuffer();
 void dhmulp_LcpTx();
@@ -434,6 +440,24 @@ void bthci_event_SendCommandCompleteEventWithStatus();
 void bthci_cmd_lc_HandleCreate_Connection();
 void bthci_cmd_lc_HandleDisconnect(char *);
 
+
+/*
+Callbacks
+*/
+extern int pageScanTaskStorage;
+extern int inqScanTaskStorage;
+extern int inqTaskStorage;
+extern int g_tca_taskVars;
+extern int afhRssiScanTaskStorage;
+extern int pageTaskStorage;
+extern int bcsulp_advTaskStorage;
+extern int bcsulp_scanTaskStorage;
+extern int bcsulp_initTaskStorage;
+
+
+
 void bt_Reset();
+
+
 
 #endif

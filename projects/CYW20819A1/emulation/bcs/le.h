@@ -2,6 +2,7 @@ int le_fd = 0;
 
 int wib_rx_status;
 int wib_pkt_log;
+extern volatile int rtx_rx_buffer;
 
 void adv() {
     if (le_fd == -1) return;
