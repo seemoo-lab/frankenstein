@@ -31,11 +31,10 @@ class CmdLoadELF(internalblue.cmds.Cmd):
 
     msg = ""
 
-
     """
         Loads Sections from ELF file to firmware
         Loads symbols into global dict
-        Executes entrypoint of ELF on behalf
+        Executes entry point of ELF on behalf
     """
     def load_ELF(self, fname):
         try:
@@ -85,7 +84,7 @@ class CmdLoadELF(internalblue.cmds.Cmd):
         return self.elf.header.e_entry
 
     """
-        Print info messages emmited from the firmware
+        Print info messages emitted from the firmware
     """
     def debug_hci_callback(self, record):
         hcipkt = record[0]
@@ -293,13 +292,21 @@ class CmdXmitState(CmdLoadELF):
     """
     def work(self):
         args = self.getArgs()
-        if args == None:
+        if not args:
             return True
 
+        # Initialize callbacks for xmitstate
         global CmdXmitStateInitialized
+
         if not CmdXmitStateInitialized:
+
+            # disable uart_SetRTSMode if we know its location
             if self.internalblue.fw.FW_NAME == "CYW20735B1":
                 self.internalblue.patchRom(0x3d32e, "\x70\x47\x70\x47")
+            elif self.internalblue.fw.FW_NAME == "CYW20819A1":
+                self.internalblue.patchRom(0x2330e, "\x70\x47\x70\x47")
+
+            # and now let's enable the callbacks
             self.internalblue.registerHciCallback(self.debug_hci_callback)
             self.internalblue.registerHciCallback(self.xmit_state_hci_callback)
             CmdXmitStateInitialized = True

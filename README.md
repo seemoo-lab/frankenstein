@@ -181,6 +181,23 @@ generated state. To do so, run:
 Now, build the project again:
 
     make -C projects/CYW20735B1
+    
+
+Live Heap Sanitizer
+-------------------
+
+Run our customized *InternalBlue* script on real hardware:
+
+    (sudo) python2 internalBlueMod.py
+    
+Load the heap sanitizer patch on top:
+
+    > loadelf projects/CYW20735B1/gen/heap_sanitizer.patch
+    
+Now you will get detailed output about heap violations, i.e., caused by `memcpy` and the function
+which called it. Depending on what you debug, you might need to adjust the definitions in `patch/heap_sanitizer.c`.
+
+
 
 
 
@@ -192,6 +209,17 @@ firmware files. For example, `internalblue/fw/fw_0x4208.py` contains the firmwar
 board and contains the identifier `FW_NAME = "CYW20735B1"`. Thus, the *Frankenstein* project name is `CYW20735B1`.
 
 For QEMU, you need to install the `qemu-user` package.
+Compilation of the project requires `gcc-arm-none-eabi`.
+
+    apt install qemu-user gcc-arm-none-eabi gcc-multilib
+
+Tested with `qemu-user (1:3.1+dfsg+8+deb10u2)` and `gcc-arm-none-eabi (15:7-2018-q2-6)` and `gcc-multilib (4:8.3.0-1)`. 
+
+The following Python 2 packets are required:
+
+    pip2 install django pyelftools==0.24
+    
+Tested with `django-1.11.24`.
 
 
 
