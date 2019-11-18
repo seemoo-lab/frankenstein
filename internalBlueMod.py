@@ -46,6 +46,11 @@ class CmdLoadELF(internalblue.cmds.Cmd):
             log.warn("Could not parse ELF file...")
             return False
 
+        if "_fini" in symbols:
+            fini = symbols["_fini"]
+            if yesno("Found _fini of already installed patch at 0x%x. Execute?" % fini):
+                self.launchRam(fini-1)
+
         #load sections
         for i in xrange(self.elf.num_sections()):
             section = self.elf.get_section(i)
@@ -76,7 +81,6 @@ class CmdLoadELF(internalblue.cmds.Cmd):
                         symbols[symbol.name] =  symbol.entry["st_value"]
                         n += 1
         log.info("Loaded %d symbols" % n)
-
 
         return self.elf.header.e_entry
 

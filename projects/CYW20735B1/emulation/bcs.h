@@ -23,11 +23,12 @@ int wait_for_ack = 1;
 void bcs_dma_hook(struct saved_regs *regs, void *arg) {
     int data, len;
     if ((int)arg & 2) {
-        print("Eir ");
+        print("EIR ");
         data = regs->r0;
         len = regs->r1;
     }
     else {
+        print("ACL ");
         data = *(uint32_t *)(regs->r0 + 16);
         len = (*(uint32_t *)(regs->r0 + 10) >> 3 & 0x3ff);
     }
@@ -39,8 +40,8 @@ void bcs_dma_hook(struct saved_regs *regs, void *arg) {
         print(" | ");
         print_ptr(len);
         print("\n");
-        */
         return;
+        */
     }
 
     /*

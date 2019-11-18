@@ -1,7 +1,10 @@
 uart_DirectWrite_1 = 0xadbe9;
-uart_DirectWrite = 0xadfa9;
 patchram_data_table = 0x160000;
+uart_DirectWrite = 0xadfa9;
+g_dynamic_memory_AllPools = 0x20075c;
 dc_ptu_uart_lsr = 0x360424;
+sr_ptu_status = 0x360084;
 dp_uart_data = 0x36001c;
 patchram_enable = 0x310404;
 patchram_address_table = 0x310000;
+dynamic_memory_allocate = 0xc389;

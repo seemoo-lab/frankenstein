@@ -36,7 +36,7 @@ uint32_t dynamic_memory_sanitizer_r1 = 0;
 uint32_t dynamic_memory_sanitizer_r2 = 0;
 uint32_t dynamic_memory_sanitizer_r3 = 0;
 
-void dynamic_memory_check_free_list(uint32_t pre_post_switch) {
+void dynamic_memory_check_free_list(char *msg) {
     struct dynamic_memory_pool *pool = g_dynamic_memory_AllPools;
     void **free_chunk;
 
@@ -46,11 +46,7 @@ void dynamic_memory_check_free_list(uint32_t pre_post_switch) {
             if ((size_t)free_chunk < (size_t)pool->block_start || 
                 (size_t)free_chunk > (size_t)pool->block_start + ((pool->size+4) * pool->capacity)) {
                 print("Heap Corruption Detected\n");
-                if (pre_post_switch) {
-                    print("Prehook\n");
-                } else {
-                    print("Post\n");
-                }
+                print(msg);
                 print_var(dynamic_memory_sanitizer_lr);
                 print_var(dynamic_memory_sanitizer_r0);
                 print_var(dynamic_memory_sanitizer_r1);
@@ -78,11 +74,11 @@ void dynamic_memory_sanitizer_prehook(struct saved_regs *regs, void *_) {
     dynamic_memory_sanitizer_r1 = regs->r1;
     dynamic_memory_sanitizer_r2 = regs->r2;
     dynamic_memory_sanitizer_r3 = regs->r3;
-    dynamic_memory_check_free_list(1);
+    dynamic_memory_check_free_list("Prehook\n");
 }
 
 uint32_t dynamic_memory_sanitizer_posthook(uint32_t retval, void *_) {
-    dynamic_memory_check_free_list(0);
+    dynamic_memory_check_free_list("Posthook\n");
     return retval;
 }
 
@@ -90,8 +86,8 @@ uint32_t dynamic_memory_sanitizer_posthook(uint32_t retval, void *_) {
     add_hook(func, dynamic_memory_sanitizer_prehook, dynamic_memory_sanitizer_posthook, NULL)
 
 #define dynamic_memory_sanitize_trace_function(func, n, hasret) {                               \
-    trace(func, n, hasret);                                                                     \
     add_hook(func, dynamic_memory_sanitizer_prehook, dynamic_memory_sanitizer_posthook, NULL);  \
+    trace(func, n, hasret);                                                                     \
 }
 
 

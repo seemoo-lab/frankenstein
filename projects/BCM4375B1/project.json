@@ -9,7 +9,7 @@
     }, 
     "segment_groups": {
         "default": {
-            "active": false, 
+            "active": true, 
             "segments": {}, 
             "symbols": {}
         }
@@ -17,9 +17,12 @@
     "symbols": {
         "dc_ptu_uart_lsr": 3540004, 
         "dp_uart_data": 3538972, 
+        "dynamic_memory_allocate": 50057, 
+        "g_dynamic_memory_AllPools": 2099036, 
         "patchram_address_table": 3211264, 
         "patchram_data_table": 1441792, 
         "patchram_enable": 3212292, 
+        "sr_ptu_status": 3539076, 
         "uart_DirectWrite": 712617, 
         "uart_DirectWrite_1": 711657
     }

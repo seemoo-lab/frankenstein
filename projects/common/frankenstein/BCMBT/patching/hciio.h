@@ -3,13 +3,23 @@
 extern int uart_DirectWrite(char *data, int len); //0x629a7 on CYW20735
 extern volatile int dc_ptu_uart_lsr; //0x360424 on CYW20735
 extern volatile int dp_uart_data;
+extern volatile int sr_ptu_status;
 
 extern int uart_write(char *data, int len) {
     for (int i=0; i < len; i++) {
         dp_uart_data = data[i];
-        while ((dc_ptu_uart_lsr & 0xc) != 8); //Wait for data to be sent
+        while (sr_ptu_status & 0x1);
+        sr_ptu_status = 1;
+
+        //while ((dc_ptu_uart_lsr & 0xc) != 8); //Wait for data to be sent
+        //while (dc_ptu_uart_lsr & 8); //Wait for data to be sent
 
     }
+
+    do {
+        sr_ptu_status = 0x2;
+    } while (!(sr_ptu_status & 0x2));
+    while((dc_ptu_uart_lsr & 0x10));
 }
 
 /*
