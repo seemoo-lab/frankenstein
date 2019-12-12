@@ -19,36 +19,31 @@ char *tx_dma_data;
 int tx_dma_len;
 
 
-int wait_for_ack = 1;
+#define BCS_DMA_HOOK_TX 1
+#define BCS_DMA_HOOK_EIR 2
 void bcs_dma_hook(struct saved_regs *regs, void *arg) {
     int data, len;
-    if ((int)arg & 2) {
-        print("EIR ");
+
+    //The RX hooks do not get a buffer as an argument
+    //Nor does the receive buffer contain any data at this point
+    if(!((int)arg & BCS_DMA_HOOK_TX)) return;
+
+    if ((int)arg & BCS_DMA_HOOK_EIR) {
+        print("EIR Tx:");
         data = regs->r0;
         len = regs->r1;
     }
     else {
-        print("ACL ");
+        print("ACL Tx:");
+        hexdump(regs->r0, 32);
+        print_var(regs->r0);
         data = *(uint32_t *)(regs->r0 + 16);
         len = (*(uint32_t *)(regs->r0 + 10) >> 3 & 0x3ff);
-    }
-    if ((int)arg & 1) print ("Tx: ")
-    else { 
-        /*
-        print("Rx: ");
-        print_ptr(data);
-        print(" | ");
-        print_ptr(len);
-        print("\n");
-        return;
-        */
+        print_var(data);
+        print_var(len);
     }
 
-    /*
-    hexdump(&pc_acscd_lo, 4);
-    hexdump(&pc_acscd_hi, 4);
-    print(" | ");
-    */
+    //Print Tx Data
     hexdump(&tx_pkt_info, 4);
     print(" | ");
     hexdump(&tx_pkt_pyld_hdr, 2);
@@ -57,12 +52,6 @@ void bcs_dma_hook(struct saved_regs *regs, void *arg) {
     print("\n");
     tx_dma_len = len;
     tx_dma_data = data;
-
-    wait_for_ack = 1;
-
-    /*
-    Rx Test
-    */
 }
 
 #ifdef EMULATED
@@ -356,10 +345,15 @@ void bcs_add_hooks() {
     trace(dma_RequestTransfer, 1, false);
 
     add_hook(bcs_dmaRxEnable, bcs_dma_hook, NULL, 0);
-    add_hook(bcs_dmaTxEnable, bcs_dma_hook, NULL, 1);
-    add_hook(bcs_dmaRxEnableEir, bcs_dma_hook, NULL, 2);
-    add_hook(bcs_dmaTxEnableEir, bcs_dma_hook, NULL, 3);
+    add_hook(bcs_dmaTxEnable, bcs_dma_hook, NULL, BCS_DMA_HOOK_TX);
+    add_hook(bcs_dmaRxEnableEir, bcs_dma_hook, NULL, BCS_DMA_HOOK_EIR);
+    add_hook(bcs_dmaTxEnableEir, bcs_dma_hook, NULL, BCS_DMA_HOOK_TX | BCS_DMA_HOOK_EIR);
     trace(bcs_dmaIsTransferComplete, 2, false);
+
+    trace(bcs_dmaRxEnableEir, 2, false);
+    trace(bcs_dmaTxEnableEir, 2, false);
+    trace(bcs_dmaRxEnable, 2, true);
+    trace(bcs_dmaTxEnable, 1, false);
 
     trace(_pageTaskFsmDone, 3, false);
     trace(_pageScanTaskFsmDone, 3, false);

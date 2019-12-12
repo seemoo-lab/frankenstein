@@ -25,8 +25,8 @@ void acl() {
         print(" | ");
         print_ptr(tx_pkt_pyld_hdr & 0xffff);
         print(" | ");
+        print_var(tx_dma_data);
         hexdump(tx_dma_data, tx_dma_len);
-        print("\n");
         hexdump(0x370400, 32);
         print("\n");
 
@@ -103,7 +103,7 @@ void acl() {
 
         //len = (pkt_log >> 5) & 0x1f;
         len = (pkt_log >> 5) & 0x3ff;
-        len = 128;
+        len = 32;
         print_var(len);
 
         if (rtx_dma_ctl != 3 && dmaActiveRxBuffer) {
