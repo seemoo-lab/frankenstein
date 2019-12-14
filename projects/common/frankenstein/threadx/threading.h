@@ -35,7 +35,7 @@ void _tx_thread_system_return_debug() {
 }
 
 /*
-In some cases scheduling is perfomed, but _tx_thread_system_return
+In some cases scheduling is performed, but _tx_thread_system_return
 is not called.
 In the idle_loop, we can therefore enforce a context switch if desired.
 */

@@ -44,6 +44,7 @@ void _tx_queue_send(void *tx_queue, void *item);
 void _tx_queue_front_send(void *tx_queue, void *item);
 void _tx_event_flags_set(void *event_group, int a, int b);
 void _tx_thread_system_resume(void *);
+void _tx_thread_context_restore();
 
 /*
 slist

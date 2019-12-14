@@ -61,22 +61,22 @@ void msgqueue_Put_hook(struct saved_regs *regs, void *arg) {
 /*
 This
 */
-//TODO get thread list
+//TODO move to variables in fwdefs.h
 void print_thrd_bcmbt(uint32_t thrd) {
     switch (thrd) {
-        case 0x249e58:
+        case 0x20C1D8: //referenced by _tx_thread_create but has no global name
             print("bttransport");
             break;
 
-        case 0x20beb4:
+        case 0x20DA8C: // g_bthci_lm_thread_Thread:
             print("lm");
             break;
 
-        case 0x20a578:
+        case 0x20C2F8: //g_pmu_idle_IdleThread:
             print("idle");
             break;
 
-        case 0x20a1fc:
+        case 0x20BF9C: // g_mpaf_thread_cb:
             print("mpaf")
             break;
 
@@ -90,7 +90,10 @@ void print_thrd_bcmbt(uint32_t thrd) {
     global code patching
 */
 
-#define idle_loop (*(uint32_t*)0x024de64) //TODO
+// idle loop is broken when a crash happens in 0xfffffffd
+//#define idle_loop (*(uint32_t*)0x024de64) //TODO not sure whre this value came from?
+#define idle_loop (*(uint32_t*)0xfffffffd)
+
 
 uint32_t _tx_v7m_get_and_disable_int();
 void _tx_v7m_set_int(uint32_t);
@@ -106,14 +109,15 @@ void patch_code() {
     patch_return(_tx_v7m_get_and_disable_int);
     patch_return(_tx_v7m_set_int);
     patch_return(_tx_v7m_get_int);
-    patch_jump(_tx_thread_system_return, _tx_thread_system_return_hook);
+    patch_jump(_tx_thread_system_return, _tx_thread_system_return_hook); // TODO i think this might be CYW20735 only in threading.h
+    //patch_return(_tx_thread_context_restore); // TODO definitely some trouble maker but this is not the fix ... leads to permanent loop of bcs_kernelRxDone(); and probably task switches are disabled
 
     patch_return(osapi_interruptContext);
     //patch_jump(osapi_interruptContext, _tx_thread_system_return);
     //patch_return(osapi_interruptContext);
 
     //Functions that we do not support and can disable without severe side effects
-    patch_return(&synch_GetXPSRExceptionNumber);
+    patch_return(synch_GetXPSRExceptionNumber);
     patch_return(0x20ffb2); //get_and_disable_int 2nd ed?! //TODO
     patch_return(btclk_DelayXus);
     patch_return(btclk_Wait4PclkChange);
