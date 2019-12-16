@@ -77,7 +77,11 @@ void print_thrd_bcmbt(uint32_t thrd) {
             break;
 
         case 0x20BF9C: // g_mpaf_thread_cb:
-            print("mpaf")
+            print("mpaf");
+            break;
+
+        case 0x20E320: // g_aa_thread_Thread
+            print("aa");
             break;
 
         default:
@@ -111,14 +115,15 @@ void patch_code() {
     patch_return(_tx_v7m_get_int);
     patch_jump(_tx_thread_system_return, _tx_thread_system_return_hook); // TODO i think this might be CYW20735 only in threading.h
     //patch_return(_tx_thread_context_restore); // TODO definitely some trouble maker but this is not the fix ... leads to permanent loop of bcs_kernelRxDone(); and probably task switches are disabled
+    patch_jump(_tx_thread_context_restore, _tx_thread_system_return); //TODO definitely not as it should be, but dies later...
 
     patch_return(osapi_interruptContext);
-    //patch_jump(osapi_interruptContext, _tx_thread_system_return);
-    //patch_return(osapi_interruptContext);
+    patch_jump(osapi_interruptContext, _tx_thread_system_return);
+    patch_return(osapi_interruptContext);
 
     //Functions that we do not support and can disable without severe side effects
-    patch_return(synch_GetXPSRExceptionNumber);
-    patch_return(0x20ffb2); //get_and_disable_int 2nd ed?! //TODO
+    patch_jump(synch_GetXPSRExceptionNumber, ret0); //FIXME this is weird, but just using "patch_return" here breaks 2
+                                                    // bytes in function before, which is synch_AtomicAdd. ret0 works, though.
     patch_return(btclk_DelayXus);
     patch_return(btclk_Wait4PclkChange);
     patch_return(btclk_AdvanceNatClk_clkpclkHWWA);
