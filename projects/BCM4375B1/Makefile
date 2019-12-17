@@ -3,7 +3,7 @@ TOOLCHAIN=arm-none-eabi-
 PATCH_CODE_BASE=0x271a00
 thumb_mode=0x1
 EMULATION_CODE_BASE=0xbeef000
-PATCH_CFLAGS=-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../common
+PATCH_CFLAGS=-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../common -D HCI_DELAY=128
 
 .PHONY=all
 

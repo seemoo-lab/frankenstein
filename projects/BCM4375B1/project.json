@@ -2,7 +2,7 @@
     "config": {
         "EMULATION_CFLAGS": "-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I ../common  -I /usr/include -D FRANKENSTEIN_EMULATION", 
         "EMULATION_CODE_BASE": 200208384, 
-        "PATCH_CFLAGS": "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../common", 
+        "PATCH_CFLAGS": "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../common -D HCI_DELAY=128", 
         "PATCH_CODE_BASE": 2562560, 
         "TOOLCHAIN": "arm-none-eabi-", 
         "thumb_mode": true
@@ -10,8 +10,79 @@
     "segment_groups": {
         "default": {
             "active": true, 
-            "segments": {}, 
-            "symbols": {}
+            "segments": {
+                "Segment_0x0": {
+                    "active": true, 
+                    "addr": 0, 
+                    "size": 1310720
+                }, 
+                "Segment_0x160000": {
+                    "active": true, 
+                    "addr": 1441792, 
+                    "size": 131072
+                }, 
+                "Segment_0x200000": {
+                    "active": true, 
+                    "addr": 2097152, 
+                    "size": 557056
+                }, 
+                "Segment_0x300000": {
+                    "active": true, 
+                    "addr": 3145728, 
+                    "size": 32768
+                }, 
+                "Segment_0x310000": {
+                    "active": true, 
+                    "addr": 3211264, 
+                    "size": 73728
+                }, 
+                "Segment_0x324000": {
+                    "active": true, 
+                    "addr": 3293184, 
+                    "size": 278528
+                }, 
+                "Segment_0x370000": {
+                    "active": true, 
+                    "addr": 3604480, 
+                    "size": 65536
+                }, 
+                "Segment_0x390000": {
+                    "active": true, 
+                    "addr": 3735552, 
+                    "size": 32768
+                }, 
+                "Segment_0x500000": {
+                    "active": true, 
+                    "addr": 5242880, 
+                    "size": 1052672
+                }, 
+                "Segment_0x604800": {
+                    "active": true, 
+                    "addr": 6309888, 
+                    "size": 2048
+                }, 
+                "Segment_0x640000": {
+                    "active": true, 
+                    "addr": 6553600, 
+                    "size": 4096
+                }, 
+                "Segment_0x650000": {
+                    "active": true, 
+                    "addr": 6619136, 
+                    "size": 256
+                }, 
+                "Segment_0xe0000000": {
+                    "active": true, 
+                    "addr": 3758096384, 
+                    "size": 1048576
+                }
+            }, 
+            "symbols": {
+                "cont": 2562629, 
+                "get_int": 2562560, 
+                "saved_regs": 2564104, 
+                "set_int": 2562568
+            }
         }
     }, 
     "symbols": {

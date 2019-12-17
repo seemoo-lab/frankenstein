@@ -27,20 +27,13 @@ void heap_show_free_list(struct heap_chunk *free_list) {
 }
 
 
-
-
-
-void **__rt_heap_descriptor();
-
 void _start() {
-    patch_code();
-    //for (int i=0; i < 8; i++) print_var(dynamic_memory_AllocateOrDie(32));
-
     //iterate heap
     struct dynamic_memory_pool *pool = g_dynamic_memory_AllPools;
     void **free_list;
-    //clear_heap();
-    //check_heap();
+
+    patch_code();
+    init_dynamic_memory_sanitizer();
 
     do {
         print("----------------------------------------\n");
@@ -49,17 +42,6 @@ void _start() {
         print_var(pool->block_start);
         print_var(pool->free_list);
         print_var(pool->available);
-        hexdump(pool->unknwn, 64);
-        print("\n");
-        print_var(dynamic_memory_AllocateOrDie(32));
-        print_var(pool->available);
-        hexdump(pool->unknwn, 64);
-        print("\n");
-        free_list = pool->free_list;
-        print_var(dynamic_memory_AllocateOrDie(32));
-        print_var(pool->available);
-        hexdump(pool->unknwn, 64);
-        print("\n");
         free_list = pool->free_list;
         do {
             print_var(free_list);
@@ -70,9 +52,9 @@ void _start() {
 
     } while (pool);
 
-    //*((int *) 0x220f20) = 0x4142;
-    //while(1) print_var(dynamic_memory_AllocateOrDie(200));
-    print_var(dynamic_memory_AllocateOrDie(0x0110));
+    void *ptr = dynamic_memory_AllocateOrDie(32);
+    memset(ptr, 0x00, 32);
+    dynamic_memory_Release(ptr);
 
     exit(0);
 }

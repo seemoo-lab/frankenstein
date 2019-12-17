@@ -97,6 +97,8 @@ class Project:
             f.write(data)
         self.create_build_scripts()
 
+        return True
+
     def error(self, msg):
         stack = inspect.stack()[2]
         fname = os.path.basename(stack[1])
@@ -315,7 +317,7 @@ class Project:
 
         return True
 
-    def set_active_group(self, group, value):
+    def set_active_group(self, group, value=True):
         if group not in self.cfg["segment_groups"]:
             self.error("Group %s does not exist" % (group))
             return False
@@ -544,18 +546,20 @@ class Project:
         self.create_symbol_ldscript()
         self.create_ldscripts()
         self.create_makefile()
+        return True
 
     def create_symbol_ldscript(self):
         symbols_defined = {}
         with open("%s/gen/symbols.ld" % self.path, "w") as f:
             #Symbols for active groups
-            for group in self.cfg["segment_groups"]:
+            for group in sorted(self.cfg["segment_groups"].keys()):
                 #skip non active groups
                 if not self.cfg["segment_groups"][group]["active"]:
                     continue
 
                 symbols = self.cfg["segment_groups"][group]["symbols"]
-                for name, addr in symbols.iteritems():
+                for name in sorted(symbols.keys()):
+                    addr = symbols[name]
                     if name not in symbols_defined:
                         f.write("%s = 0x%x;\n" % (name, addr))
                         symbols_defined[name] = group
@@ -563,7 +567,8 @@ class Project:
                         self.error("Symbol %s in group %s already defined in group %s" % (name, group, symbols_defined[name]))
 
             #Global Symbols
-            for name, addr in self.cfg["symbols"].iteritems():
+            for name in sorted(self.cfg["symbols"].keys()):
+                addr = self.cfg["symbols"][name]
                 if name not in symbols_defined:
                     f.write("%s = 0x%x;\n" % (name, addr))
                     symbols_defined[name] = "global"

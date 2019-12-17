@@ -14,6 +14,10 @@ extern int uart_write(char *data, int len) {
         //while ((dc_ptu_uart_lsr & 0xc) != 8); //Wait for data to be sent
         //while (dc_ptu_uart_lsr & 8); //Wait for data to be sent
 
+        #ifdef HCI_DELAY
+            for (volatile int t=0; t < HCI_DELAY; t++);
+        #endif
+
     }
 
     /*

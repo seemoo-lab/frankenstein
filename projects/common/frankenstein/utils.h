@@ -203,7 +203,6 @@ char *ptmx_btattach(int ptmx) {
     char *pts_name = ptmx_name(ptmx);
     char *params[] = {"/usr/bin/btattach", "-B", pts_name, NULL};
     if (fork() == 0) {
-        close(1);
         execve("/usr/bin/btattach", params, NULL);
     }
 

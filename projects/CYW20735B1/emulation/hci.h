@@ -122,6 +122,11 @@ void hci_rx_poll(int timeout_ms) {
     ufds.events = POLLIN;
     ret = poll(&ufds, 1, timeout_ms);
 
+    //Test if there is actual data available
+    int count;
+    ioctl(hci_rx_fd, FIONREAD, &count);
+    if (count == 0) return;
+
     //No Data Available
     if (ret <= 0) return;
 
