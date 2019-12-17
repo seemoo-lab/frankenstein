@@ -26,7 +26,7 @@ patch code with "bx lr"
 
 /*
 installs a jump at a given address using "ldr pc, [pc]"
-for not aligend addresses a nop is inserted to align the code
+for not aligned addresses a nop is inserted to align the code
 */
 
 #define patch_jump(x, func) {                               \

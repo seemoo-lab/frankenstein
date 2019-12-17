@@ -401,7 +401,7 @@ Illegal instruction
 Debugging works as follows:
 ```qemu-arm -g 31337 projects/CYW20819A1/gen/execute.exe```
 
-In a new window, start `gdb`.
+In a new window, start `gdb`. (Might require `gdb-multiarch` or `gdb-arm-none-eabi`.)
 
 ``` 
 (gdb) target remote 127.0.0.1:31337
@@ -458,3 +458,36 @@ This function can simply be disabled. It was already defined to be skipped but t
 of this function was hard coded in our case. Exceptions are located in `common.h` and disabled
 via `patch_return(synch_GetXSPRExceptionNum)`.
 Overall, most functions that do not work out to be emulated can just be disabled.
+
+
+---
+
+Missing `idle_loop` is also strange. 
+
+```
+qemu: unhandled CPU exception 0x9 - aborting
+R00=10000000 R01=e000e000 R02=00000000 R03=00000000
+R04=00000000 R05=00205888 R06=00200ba8 R07=00000000
+R08=00000000 R09=00000000 R10=00225b44 R11=00000000
+R12=00000000 R13=002003d8 R14=fffffffd R15=fffffffc
+PSR=60000030 -ZC- T S usr32
+```
+
+Once you find it in `gdb`, the last steps are:
+
+``` 
+_tx_thread_context_restore: 0x00010574, 0x10596 -> here, LR is already set to 0xfffffffd (idle hook!)
+(stepi 400 -> Cannot access memory at address 0xfffffffc)
+(gdb) stepi
+0x00010598 in ?? ()
+(gdb) stepi
+0x0001059a in ?? ()
+(gdb) stepi
+0x0001059e in ?? ()
+(gdb) stepi
+0x000105a2 in ?? ()
+(gdb) stepi
+0x000105a6 in ?? ()
+(gdb) stepi
+0xfffffffc in ?? ()
+```
