@@ -9,11 +9,6 @@
     }, 
     "segment_groups": {
         "default": {
-            "active": false, 
-            "segments": {}, 
-            "symbols": {}
-        }, 
-        "internalBlue_11.07.2019_13.52.37": {
             "active": true, 
             "segments": {
                 "Segment_0x0": {

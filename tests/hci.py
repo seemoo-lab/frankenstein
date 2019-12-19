@@ -24,6 +24,16 @@ def hci_test(cmd):
     p.stdin.flush()
     assert hexlify(hci_read_event(p.stdout)) == "040e0401030c00"
 
+    print "Write EIR"
+    p.stdin.write(unhexlify("01520cf100" + "42"*0xf0))
+    p.stdin.flush()
+    assert hexlify(hci_read_event(p.stdout)) == "040e0401520c00"
+
+    print "Read EIR"
+    p.stdin.write(unhexlify("01510c00"))
+    p.stdin.flush()
+    assert hexlify(hci_read_event(p.stdout)) == "040ef501510c0000"+"42"*0xf0
+
     print "Enable lescan"
     p.stdin.write(unhexlify("010c20020101"))
     p.stdin.flush()
@@ -38,16 +48,6 @@ def hci_test(cmd):
     while hexlify(hci_read_event(p.stdout)) != "040e04010c2000":
         pass
 
-    print "Write EIR"
-    p.stdin.write(unhexlify("01520cf100" + "42"*0xf0))
-    p.stdin.flush()
-    assert hexlify(hci_read_event(p.stdout)) == "040e0401520c00"
-
-    print "Read EIR"
-    p.stdin.write(unhexlify("01510c00"))
-    p.stdin.flush()
-    assert hexlify(hci_read_event(p.stdout)) == "040ef501510c0000"+"42"*0xf0
-
     print "Run Inquiry"
     p.stdin.write(unhexlify("01010405338b9e0000"))
     p.stdin.flush()
@@ -60,4 +60,4 @@ def hci_test(cmd):
         except:
             break
 
-hci_test("qemu-arm projects/CYW20735B1/gen/hci_test.exe 2>/dev/null")
+hci_test("qemu-arm projects/"+sys.argv[1]+"/gen/hci_test.exe 2>/dev/null")

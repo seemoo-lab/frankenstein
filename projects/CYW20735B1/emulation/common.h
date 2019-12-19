@@ -114,6 +114,7 @@ void patch_code() {
 
     //Functions, we do not support
     patch_return(0xa43ee);  //synch_GetXSPRExceptionNum
+    patch_return(0x20ffba); //get_and_disable_int 2nd ed?!
     patch_return(0x20ffb2); //get_and_disable_int 2nd ed?!
     patch_return(btclk_DelayXus);
     patch_return(btclk_Wait4PclkChange);

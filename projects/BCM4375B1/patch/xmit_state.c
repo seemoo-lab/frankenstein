@@ -2,6 +2,11 @@
 #include <frankenstein/BCMBT/patching/hciio.h>
 #include <frankenstein/patching/xmit_state.h>
 
+/*
+    Maybe requires the following on the remote device
+
+    setprop persist.bluetooth.btsnoopsize 1000000000
+*/
 
 //void wiced_hal_wdog_disable();
 struct hook *xmit_hook;

@@ -4,6 +4,8 @@ int timeout = 10;
 void inquiry() {
     if (inq_fd == -1) return;
 
+    print_var(pcx_btclk);
+
     //hci_tx_fd = -1;
     //hci_rx_fd = -1;
     //xmit_state_emu("gen/inq.exe");

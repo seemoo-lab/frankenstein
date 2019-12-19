@@ -232,11 +232,12 @@ void bcs_tick() {
     //bcs_info();
     if (tb == pageScanTaskStorage)
         { print("tb = pageScan\n"); pagescan(); }
-    else if (tb == pageTaskStorage)
-        {print("tb = page\n");  page(); }
+    //else if (tb == pageTaskStorage)
+    //    {print("tb = page\n");  page(); }
     else if (tb == inqScanTaskStorage)
         print("tb = inqScan\n")
-    else if (tb == inqTaskStorage)
+    //else if (tb == inqTaskStorage)
+    else if (tb == pageTaskStorage)
         { print("tb = inq\n"); inquiry(); }
     else if (tb == g_tca_taskVars)
         { print("tb = tca\n"); bcs_dummy(); }

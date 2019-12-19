@@ -96,26 +96,37 @@ void print_thrd_bcmbt(uint32_t thrd) {
 
 // idle loop is broken when a crash happens in 0xfffffffd
 //#define idle_loop (*(uint32_t*)0x024de64) //TODO not sure whre this value came from?
-#define idle_loop (*(uint32_t*)0xfffffffd)
+#define idle_loop (*(uint32_t*)0x2003d4)
 
 
 uint32_t _tx_v7m_get_and_disable_int();
 void _tx_v7m_set_int(uint32_t);
 uint32_t _tx_v7m_get_int();
 
+uint32_t get_int();
+void set_int(uint32_t);
+
+
+void bcs_pmuTimeToSleepCallback();
+void bcs_pmuSleepEnable();
 
 void synch_GetXPSRExceptionNumber();
 void osapi_interruptContext();
 void btclk_AdvanceNatClk_clkpclk();
 
 void patch_code() {
+    patch_return(bcs_pmuSleepEnable);
+
     //ThreadX basics
     patch_return(_tx_v7m_get_and_disable_int);
     patch_return(_tx_v7m_set_int);
     patch_return(_tx_v7m_get_int);
+    patch_return(get_int);
+    patch_return(set_int);
+
     patch_jump(_tx_thread_system_return, _tx_thread_system_return_hook); // TODO i think this might be CYW20735 only in threading.h
     //patch_return(_tx_thread_context_restore); // TODO definitely some trouble maker but this is not the fix ... leads to permanent loop of bcs_kernelRxDone(); and probably task switches are disabled
-    patch_jump(_tx_thread_context_restore, _tx_thread_system_return); //TODO definitely not as it should be, but dies later...
+    //patch_jump(_tx_thread_context_restore, _tx_thread_system_return); //TODO definitely not as it should be, but dies later...
 
     patch_return(osapi_interruptContext);
     patch_jump(osapi_interruptContext, _tx_thread_system_return);
