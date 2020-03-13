@@ -15,11 +15,11 @@ void do_exit() {
 
 void _start() {
     patch_code();
-    char bd_addr[6];
+    char bd_addr[6] = {0x41, 0x41, 0x41, 0x41, 0x41, 0x41};
 
     inqfilter_init();
-    for (int i=0; i < 1024; i++) {
-        *(int *)bd_addr = i;
+    for (unsigned char i=0; i < 0xff; i++) {
+        bd_addr[0] = i;
         inqfilter_registerBdAddr(bd_addr, 0);
         print_var(i);
     }

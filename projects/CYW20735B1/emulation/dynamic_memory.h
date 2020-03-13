@@ -45,7 +45,7 @@ void *_memset(void *dest, const size_t n, int c);
 void init_dynamic_memory_sanitizer() {
     //clear_heap();
 
-    dynamic_memory_check_free_list("Load\n");
+    dynamic_memory_check_free_list("Load\n", 0);
 
     dynamic_memory_sanitize_trace_function(inqfilter_isBdAddrRegistered, 1, false);
     dynamic_memory_sanitize_trace_function(inqfilter_registerBdAddr, 1, false);

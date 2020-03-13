@@ -45,7 +45,7 @@ void *_memset(void *dest, const size_t n, int c);
 void init_dynamic_memory_sanitizer() {
     //clear_heap();
 
-    dynamic_memory_check_free_list(1);
+    dynamic_memory_check_free_list("Load", 0);
 
     dynamic_memory_sanitize_trace_function(dynamic_memory_Release, 1, false);
     dynamic_memory_sanitize_trace_function(dynamic_memory_AllocatePrivate, 3, false);

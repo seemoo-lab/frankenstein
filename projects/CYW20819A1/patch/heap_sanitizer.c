@@ -26,7 +26,7 @@ void *__rt_memcpy(void *dest, const void *src, size_t n);
 
 
 int _start() {
-    dynamic_memory_check_free_list(1);
+    dynamic_memory_check_free_list("load", 1);
     dynamic_memory_sanitize_function(bt_boot_hci_WriteBytesToNonByteAddressableMemory);
     //dynamic_memory_sanitize_function(dynamic_memory_Release);
 

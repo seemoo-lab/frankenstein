@@ -48,7 +48,7 @@ class emu:
 
         self.emulator_base_start = None
         self.emulator_base_stop = None
-        self.fw_entry = self.symbols["cont"] # ignore everything until that symbol
+        self.fw_entry = self.symbols[fw_entry_symbol] # ignore everything until that symbol
 
         #loading prog headrs
         self.state = []

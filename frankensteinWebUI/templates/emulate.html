@@ -82,7 +82,8 @@
         var term = new Terminal();
         var text = atob('{{ t.memdif_rendered }}').replace(/\n/g, '\r\n');
         var rows = text.split(/\r\n|\r|\n/).length;
-        term.resize(120, Math.min(rows, 80));
+        //term.resize(120, Math.min(rows, 80));
+        term.resize(120, Math.max(rows, 1));
         term.setOption('fontSize', 12);
         term.open(document.getElementById('memdiff_term_{{ t.resid }}'));
         term.write(text);

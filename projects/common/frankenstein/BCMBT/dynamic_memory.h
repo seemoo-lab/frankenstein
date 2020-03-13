@@ -47,7 +47,7 @@ void dynamic_memory_check_free_list(char *msg, int show_regs) {
                 (size_t)free_chunk > (size_t)pool->block_start + ((pool->size+4) * pool->capacity)) {
                 print("Heap Corruption Detected\n");
                 print(msg);
-                if (show_reg) {
+                if (show_regs) {
                     print_var(dynamic_memory_sanitizer_lr);
                     print_var(dynamic_memory_sanitizer_r0);
                     print_var(dynamic_memory_sanitizer_r1);
