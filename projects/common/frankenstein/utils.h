@@ -1,19 +1,16 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 
 #ifndef FRANKENSTEIN_UTILS_H
 #define FRANKENSTEIN_UTILS_H
 
+//Lib GCC import to support software division
 #include "lgcc.h"
 
-//syscall defs
-
-//void exit(int status);
-//size_t read(int fildes, void *buf, size_t nbyte);
-//size_t write(int fildes, const void *buf, size_t nbyte);
-//unsigned alarm(unsigned seconds);
 
 char hex_chars[] = "0123456789abcdef";
 void _print_ptr(size_t p) {
@@ -102,7 +99,7 @@ void register_signal(int sig, void *sighandler, void *restorer) {
     action.sa_flags = SA_RESTART;
     if (restorer) action.sa_flags |= SA_RESTORER;
     action.sa_restorer = restorer;
-    sigaction(sig, &action, NULL);
+    sigaction(sig, (struct sigaction *) &action, NULL);
 }
 void sigreturn_wrap();
 asm ("sigreturn_wrap: mov sp, r0; swi #0x900077;");
