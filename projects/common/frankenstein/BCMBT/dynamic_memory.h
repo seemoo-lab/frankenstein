@@ -36,7 +36,7 @@ uint32_t dynamic_memory_sanitizer_r1 = 0;
 uint32_t dynamic_memory_sanitizer_r2 = 0;
 uint32_t dynamic_memory_sanitizer_r3 = 0;
 
-void dynamic_memory_check_free_list(char *msg) {
+void dynamic_memory_check_free_list(char *msg, int show_regs) {
     struct dynamic_memory_pool *pool = g_dynamic_memory_AllPools;
     void **free_chunk;
 
@@ -47,11 +47,13 @@ void dynamic_memory_check_free_list(char *msg) {
                 (size_t)free_chunk > (size_t)pool->block_start + ((pool->size+4) * pool->capacity)) {
                 print("Heap Corruption Detected\n");
                 print(msg);
-                print_var(dynamic_memory_sanitizer_lr);
-                print_var(dynamic_memory_sanitizer_r0);
-                print_var(dynamic_memory_sanitizer_r1);
-                print_var(dynamic_memory_sanitizer_r2);
-                print_var(dynamic_memory_sanitizer_r3);
+                if (show_reg) {
+                    print_var(dynamic_memory_sanitizer_lr);
+                    print_var(dynamic_memory_sanitizer_r0);
+                    print_var(dynamic_memory_sanitizer_r1);
+                    print_var(dynamic_memory_sanitizer_r2);
+                    print_var(dynamic_memory_sanitizer_r3);
+                }
                 print_var(pool);
                 print_var(pool->block_start);
                 print_var(pool->capacity);
@@ -68,26 +70,26 @@ void dynamic_memory_check_free_list(char *msg) {
     } while (pool);
 }
 
-void dynamic_memory_sanitizer_prehook(struct saved_regs *regs, void *_) {
+void dynamic_memory_sanitizer_prehook(struct saved_regs *regs, void *arg) {
     dynamic_memory_sanitizer_lr = regs->lr;
     dynamic_memory_sanitizer_r0 = regs->r0;
     dynamic_memory_sanitizer_r1 = regs->r1;
     dynamic_memory_sanitizer_r2 = regs->r2;
     dynamic_memory_sanitizer_r3 = regs->r3;
-    dynamic_memory_check_free_list("Prehook\n");
+    dynamic_memory_check_free_list("Prehook\n", (int)arg);
 }
 
-uint32_t dynamic_memory_sanitizer_posthook(uint32_t retval, void *_) {
-    dynamic_memory_check_free_list("Posthook\n");
+uint32_t dynamic_memory_sanitizer_posthook(uint32_t retval, void *arg) {
+    dynamic_memory_check_free_list("Posthook\n", (int)arg);
     return retval;
 }
 
 #define dynamic_memory_sanitize_function(func) \
-    add_hook(func, dynamic_memory_sanitizer_prehook, dynamic_memory_sanitizer_posthook, NULL)
+    add_hook(func, dynamic_memory_sanitizer_prehook, dynamic_memory_sanitizer_posthook, (void *)1)
 
-#define dynamic_memory_sanitize_trace_function(func, n, hasret) {                               \
-    add_hook(func, dynamic_memory_sanitizer_prehook, dynamic_memory_sanitizer_posthook, NULL);  \
-    trace(func, n, hasret);                                                                     \
+#define dynamic_memory_sanitize_trace_function(func, n, hasret) {                                   \
+    add_hook(func, dynamic_memory_sanitizer_prehook, dynamic_memory_sanitizer_posthook, (void *)0); \
+    trace(func, n, hasret);                                                                         \
 }
 
 

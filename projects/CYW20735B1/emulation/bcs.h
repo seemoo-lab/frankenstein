@@ -221,7 +221,7 @@ void bcs_tick() {
 
     //bcs_info();
     if (tb == 0x2822e0)
-        { print("tb = pageScan\n"); pagescan(); }
+        { print("tb = pageScan\n"); } //pagescan(); }
     else if (tb == 0x20a9c8)
         {print("tb = page\n");  page(); }
     else if (tb == 0x282250)

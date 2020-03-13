@@ -101,6 +101,11 @@ void synch_GetXSPRExceptionNum();
 void osapi_interruptContext();
 void btclk_AdvanceNatClk_clkpclk();
 
+
+void pmu_sds_ReadSnappedClocks();
+void bcs_pmuSleepEnable();
+void bcs_kernelBcsShutdownCheck();
+
 void patch_code() {
     //ThreadX basics
     patch_return(_tx_v7m_get_and_disable_int);
@@ -151,6 +156,10 @@ void patch_code() {
 
     //add heap sanitizer
     init_dynamic_memory_sanitizer();
+
+
+    patch_return(pmu_sds_ReadSnappedClocks);
+    patch_return(bcs_pmuSleepEnable);
 }
 
 #endif
