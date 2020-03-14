@@ -1,3 +1,6 @@
+#ifndef __FRANKENSTEIN_THREADX_THREADING_H
+#define  __FRANKENSTEIN_THREADX_THREADING_H
+
 #include <frankenstein/utils.h>
 
 /*
@@ -94,3 +97,14 @@ asm(
         "bx lr\n"
 );
 
+/*
+After executing a firmware state, we will perform a return from interrupt
+The return address on the stack will be 0xfffffffd
+idle_loop_ptr is the address of this return address on the stack
+It will be overwritten with a pointer to a custom function to handle this state
+*/
+
+#define idle_loop (* (void(**)(void)) (idle_loop_ptr))
+
+
+#endif

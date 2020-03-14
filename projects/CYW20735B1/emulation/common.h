@@ -90,7 +90,7 @@ void print_thrd_bcmbt(uint32_t thrd) {
     global code patching
 */
 
-#define idle_loop (*(uint32_t*)0x024de64)
+#define idle_loop_ptr (0x024de64)
 
 uint32_t _tx_v7m_get_and_disable_int();
 void _tx_v7m_set_int(uint32_t);
@@ -130,8 +130,7 @@ void patch_code() {
     print_thrd = print_thrd_bcmbt;
 
     //Relplace return from interrupt addr with exit
-    if(idle_loop == 0xfffffffd)
-        idle_loop = clean_exit;
+    idle_loop = clean_exit;
 
     //Watchdog HW Reset
     patch_jump(&wdog_generate_hw_reset, &die);

@@ -132,7 +132,7 @@ def newProject(request):
 
 def getProjectCfg(request):
     projectName = request.GET["projectName"]
-    if not os.path.isfile("projects/%s/project.json"):
+    if not os.path.isfile("projects/%s/project.json" % projectName):
         redirect("/")
 
     project = getProjectByName(projectName)
@@ -140,7 +140,7 @@ def getProjectCfg(request):
 
 def projectSanityCheck(request):
     projectName = request.GET["projectName"]
-    if not os.path.isfile("projects/%s/project.json"):
+    if not os.path.isfile("projects/%s/project.json" % projectName):
         redirect("/")
 
     try:

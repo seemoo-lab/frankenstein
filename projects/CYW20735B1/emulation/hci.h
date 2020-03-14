@@ -12,40 +12,6 @@
 
 
 
-/*
-Reading HCI packets
-*/
-
-/*
-This is called in the interrupt handler to complete a Asynch read
-*/
-
-void uart_DirectRead_hook(char *data, int len) {
-    int ret;
-    print("\033[;32mHCI Direct Read ");
-    for (ret = -1; ret < 0; ret = read(hci_rx_fd, data, len));
-    hexdump(data, len);
-    print("\033[;00m\n");
-
-    hci_dump_raw_enable = 1;
-    if (ret == 0) exit(1); //no more to read, exit
-    return ret;
-}
-
-/*
-This method tries to receive directly from the uart and loops forever, as there are no data to read
-Therefore, wee hook it
-*/
-int uart_ReceiveSynch_hook(void *uart_struct, char *data, int len) {
-    print("\033[;32mHCI ReceiveSynch ");
-    int ret;
-    for (ret = -1; ret < 0; ret = read(hci_rx_fd, data, len));
-    hexdump(data, len);
-    print("\033[;00m\n");
-
-    hci_dump_raw_enable = 1;
-    return 8;
-}
 
 /*
 Some debug stuff, deprecated

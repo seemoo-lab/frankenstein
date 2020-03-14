@@ -96,7 +96,11 @@ void print_thrd_bcmbt(uint32_t thrd) {
 
 // idle loop is broken when a crash happens in 0xfffffffd
 //#define idle_loop (*(uint32_t*)0x024de64) //TODO not sure whre this value came from?
-#define idle_loop (*(uint32_t*)0x2003d4)
+//#define idle_loop (*(uint32_t*)0x2003d4)
+#define define_idle_loop(addr)  int asd = addr;
+//define idle_loop (* (void(**)(void)) (addr))
+
+#define idle_loop_ptr 0x2003d4
 
 
 uint32_t _tx_v7m_get_and_disable_int();
@@ -144,8 +148,7 @@ void patch_code() {
     print_thrd = print_thrd_bcmbt;
 
     //Relplace return from interrupt addr with exit
-    if(idle_loop == 0xfffffffd)
-        idle_loop = clean_exit;
+    idle_loop = clean_exit;
 
     //Watchdog HW Reset
     patch_jump(&wdog_generate_hw_reset, &die);

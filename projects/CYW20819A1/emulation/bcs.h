@@ -1,6 +1,7 @@
 #ifndef BCS_H
 #define BCS_H
 
+#include <frankenstein/threadx/threading.h>
 
 #define HW_PHY_STATUS_RX_DONE 0x0001
 #define HW_PHY_STATUS_RX_HEADER_DONE 0x0002
