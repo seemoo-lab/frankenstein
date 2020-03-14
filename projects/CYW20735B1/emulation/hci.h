@@ -1,54 +1,10 @@
 #ifndef HCI_H
 #define HCI_H
 
-
+#include <frankenstein/BCMBT/hci.h>
 #include "common.h"
 
 
-int hci_tx_fd = -1;
-int hci_rx_fd = -1;
-int hci_dump_raw_enable = 0; //we wait until the first hci cmd before dumping events
-
-/*
-Sending hci Events
-*/
-
-void uart_SendSynch_hook(void *some_struct, char *data, int len) {
-    print("\033[;32mHCI Event (Synch)");
-    hexdump(data,len);
-    print("\033[;00m");
-
-    return; //XXX called in send header before ...
-    if (hci_tx_fd != -1 && hci_dump_raw_enable) {
-        write(hci_tx_fd, data, len);
-    }
-}
-
-void uart_SendAsynch_hook(struct saved_regs *regs, void *arg) {
-    uint32_t size = *(uint32_t*) regs->sp;
-    print("\033[;32mHCI Event (Asynch)");
-    hexdump(regs->r1, regs->r2); //header aka type
-    hexdump(regs->r3, size); //hci packet
-    print("\033[;00m\n");
-
-    //dump raw packets
-    if (hci_tx_fd != -1 && hci_dump_raw_enable) {
-        write(hci_tx_fd, regs->r1, regs->r2);
-        write(hci_tx_fd, regs->r3, size);
-    }
-}
-
-void uart_DirectWrite_hook(char *data, int len) {
-    return; //not needed
-    print("\033[;32mHCI Event (Direct Write)");
-    hexdump(data, len);
-    print("\033[;00m\n");
-
-    return;
-    if (hci_tx_fd != -1 && hci_dump_raw_enable) {
-        write(hci_tx_fd, data, len);
-    }
-}
 
 
 //0x249f70 = g_uart_DriverState
@@ -187,14 +143,14 @@ void hci_install_hooks() {
     //ret0 is needed to notify the state machine, that the data has been sent immediately
     add_hook(uart_SendAsynch, &uart_SendAsynch_hook, ret0, NULL); //XXX Working
 
+    jump_trace(uart_DirectRead, uart_DirectRead_hook, 2, false);
+
     //hci uart rx
     patch_jump(&mpaf_hci_EventFilter, &ret0); //we dont want any hci events to be droped
     patch_jump(&uart_SetAndCheckReceiveAFF, &ret0); //there is never data available on uart
-    patch_jump(&uart_DirectRead, &uart_DirectRead_hook);
     patch_jump(&uart_ReceiveSynch, &uart_ReceiveSynch_hook);
 
     trace(uart_ReceiveAsynch, 3, true);
-    trace(uart_DirectRead, 3, true);
     trace(uart_SendSynchHeaderBeforeAsynch, 4, false);
     trace(uart_SendAsynch, 4, true);
     trace(uart_SendSynch, 4, false);

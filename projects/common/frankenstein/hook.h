@@ -262,7 +262,10 @@ asm(
 #ifdef print_ptr
     #define trace(func, n, hasret) add_hook(&func, &trace_prehook_##n, &trace_posthook_##hasret, #func);
 
-    //XXX 0x201cec is the current thread ptr, make generic
+    #define jump_trace(func, target, n, hasret){    \
+        patch_jump(func, target)                    \
+        trace(func, n, hasret) }
+        
     #define trace_color "\033[;36m"
     void trace_prehook_0(struct saved_regs *regs, void *func_name) {  \
         print(trace_color);

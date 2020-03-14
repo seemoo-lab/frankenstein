@@ -92,6 +92,28 @@ uint32_t dynamic_memory_sanitizer_posthook(uint32_t retval, void *arg) {
     trace(func, n, hasret);                                                                         \
 }
 
+void show_heap() {
+    struct dynamic_memory_pool *pool = g_dynamic_memory_AllPools;
+    void **free_chunk;
+
+    do {
+        print_var(pool);
+        print_var(pool->block_start);
+        print_var(pool->capacity);
+        print_var(pool->size);
+
+        free_chunk = pool->free_list;
+        do {
+            print("  ");
+            print_var(free_chunk);
+            free_chunk = *free_chunk;
+        } while(free_chunk);
+        print("\n");
+
+        pool = pool->next;
+    } while (pool);
+
+}
 
 /*
 void clear_heap() {

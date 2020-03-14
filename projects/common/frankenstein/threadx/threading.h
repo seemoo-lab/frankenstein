@@ -10,6 +10,7 @@ between those threads. This function is re-implemented here.
 */
 
 
+void _tx_thread_system_return(void);
 extern uint32_t _tx_thread_current_ptr;
 extern uint32_t _tx_thread_execute_ptr;
 void (*print_thrd)(uint32_t) = NULL;

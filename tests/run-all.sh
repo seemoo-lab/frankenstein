@@ -10,3 +10,5 @@ python2 tests/hci.py CYW20735B1
 
 python2 tests/project.py CYW20819A1 execute.exe
 #python2 tests/hci.py CYW20819A1
+
+python2 tests/project.py BCM4375BBCM4375B1

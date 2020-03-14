@@ -7,5 +7,5 @@ void *bt_boot_hci_WriteBytesToNonByteAddressableMemory(void *src, int len, void 
 
 
 int _start() {
-    dynamic_memory_check_free_list("Load");
+    dynamic_memory_check_free_list("Load", 1);
 }

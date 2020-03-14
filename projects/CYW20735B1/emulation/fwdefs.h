@@ -73,8 +73,6 @@ void *btuartcommon_SendHCICommandBackToTransportThread(int);
 //For some reason, this always send 0x19 before any hci packet
 void uart_SendSynchHeaderBeforeAsynch(void *some_struct, char *data, int len, int x);
 // thrd=0x249e58 lr=0x019265 uart_SendAsynch(0x249f70, 0x249e00, 0x01, 0x2117c8)
-void uart_SendAsynch(void *uart_struct, char *data, int len, int x);
-void uart_SendSynch(void *uart_struct, char *data, int len);
 void btuarth4_getpti();
 void uart_SetAndCheckReceiveAFF();
 void uart_SetAndCheckTransmitAEF();
@@ -160,7 +158,6 @@ extern struct thread_dvdn g_pmu_idle_IdleThread;
 extern int g_bthci_lm_thread_Thread;
 
 void _tx_thread_system_suspend();
-void _tx_thread_system_return(void);
 void _tx_thread_suspend(void);
 int osapi_waitEvent(void *dvdn, int mask, int x);
 void interrupt_DisableInterrupts();
