@@ -163,7 +163,7 @@ class emu:
         else:
             self.coverage_activity[address] = 1
 
-        if address in self.watchpoints:
+        if address in self.watchpoints or address^1 in self.watchpoints:
             self.trace_state_change("Execute")
 
     @staticmethod

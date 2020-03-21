@@ -198,7 +198,6 @@ addUpdateCallback(loadELFUpdateGroupOptions);
 
 
 <!-- Add Symbol Dialog -->
-<input type="button" value="Add symbol" onclick="document.getElementById('addSymbolDialog').showModal()">
 <dialog close id="addSymbolDialog">
   <h4 id="addSymbolDialogTitle">Add Symbol</h4>
   <form action="editSymbol" id="addSymbolDialogForm" method="POST">
@@ -396,10 +395,10 @@ addUpdateCallback(sanity_check);
       showButton.id = "group"+groupName;
       showButton.addEventListener("click", function() {
         var content = document.getElementById(this.id+"Content");
-        if (content.style.display === "block") {
+        if (content.style.display === "") {
           content.style.display = "none";
         } else {
-          content.style.display = "block";
+          content.style.display = "";
         }
         groupsDisplayStatus[groupName] = content.style.display;
       });
@@ -418,11 +417,11 @@ addUpdateCallback(sanity_check);
       //Group Div
       var segmentDiv = document.createElement('div');
       segmentDiv.classList.add("overflow:hidden");
-      segmentDiv.id = showButton.id+"Content";
-      segmentDiv.style.display = (groupName in groupsDisplayStatus) ? groupsDisplayStatus[groupName] : "none";
       segmentDiv.appendChild(getGroupSegmentTable(groupName));
 
       segmentTable = groupTable.insertRow().insertCell();
+      segmentTable.style.display = (groupName in groupsDisplayStatus) ? groupsDisplayStatus[groupName] : "none";
+      segmentTable.id = showButton.id+"Content";
       segmentTable.colSpan = 3;
       segmentTable.appendChild(segmentDiv);
     }
@@ -534,28 +533,25 @@ addUpdateCallback(sanity_check);
   <tbody id="finalELFTable"></tbody>
 </table>
 
-<hr>
-
-<h3>Emulators</h3>
-
-{% for emu in emulators %}
-
-<a href="emulate?projectName={{ projectName }}&emulatorName={{ emu }}">{{ emu }}</a> <br>
-
-{% endfor %}
-
-
-
 <br>
 <hr>
 
-<h3>Symbol Search</h3>
-
-Symbol Name <input type="text" id="symbolNameFilter" onkeyup="filter_symbols()"></input>
-Group Name <input type="text" id="symbolGroupFilter" onkeyup="filter_symbols()"></input>
-Addr <input type="text" id="symbolAddFilterr" onkeyup="filter_symbols()"></input>
-
 <h3>Symbols</h3>
+
+<table>
+  <tr>
+    <th colspan=2>Search</th>
+    <th rowspan=4>
+      <input type="button" value="Add symbol" style="width:100%; height:30px;" onclick="document.getElementById('addSymbolDialog').showModal()">
+    </th>
+  </tr>
+  <tr><td>Name </td><td>  <input type="text" id="symbolNameFilter" onkeyup="filter_symbols()"></input> </td></tr>
+  <tr><td>Addr </td><td> <input type="text" id="symbolAddFilterr" onkeyup="filter_symbols()"></input> </td></tr>
+  <tr><td>Group</td><td> <input type="text" id="symbolGroupFilter" onkeyup="filter_symbols()"></input> </td></tr>
+</table>
+
+<br>
+
 
 <!-- Symbol Table -->
 <table>

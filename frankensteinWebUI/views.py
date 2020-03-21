@@ -71,7 +71,16 @@ class loadIdbForm(forms.Form):
     loadSegments = forms.BooleanField(help_text="Load Segments", required=False, initial=True)
 
 
+def render_wrapper(request, template, context={}):
+    projects = glob.glob("projects/*/project.json")
+    projects = map(lambda x: os.path.basename(os.path.dirname(x)), projects)
 
+    context["projects"] = {}
+    for projectName in projects:
+        emulators = glob.glob(getProjectPath(projectName)+"/gen/*.exe")
+        context["projects"][projectName] = map(os.path.basename, emulators)
+
+    return render(request, template, context)
 
 """
 Project Management
@@ -84,10 +93,7 @@ def getProjectByName(projectName):
     return Project(projectPath)
 
 def index(request):
-    projects = glob.glob("projects/*/project.json")
-    projects = map(lambda x: os.path.basename(os.path.dirname(x)), projects)
-    context = {"projects": projects}
-    return render(request, 'index.html', context)
+    return render_wrapper(request, 'index.html')
 
 def project(request):
     projectName = request.GET["projectName"]
@@ -98,14 +104,11 @@ def project(request):
 
     patches = glob.glob(getProjectPath(projectName)+"/gen/*.patch")
     patches = map(os.path.basename, patches)
-    emulators = glob.glob(getProjectPath(projectName)+"/gen/*.exe")
-    emulators = map(os.path.basename, emulators)
 
     context = {
         "projectName": projectName,
         "project": project,
         "patches": patches,
-        "emulators": emulators
     }
     context['projectNameForm'] = projectNameForm({"projectName": projectName})
     context['editSegmentForm'] = editSegmentForm({"projectName": projectName})
@@ -113,7 +116,7 @@ def project(request):
     context['loadELFForm'] = loadELFForm({"projectName": projectName})
     context['loadIdbForm'] = loadIdbForm({"projectName": projectName})
 
-    return render(request, 'project.html', context)
+    return render_wrapper(request, 'project.html', context)
 
 
 def newProject(request):
@@ -128,7 +131,7 @@ def newProject(request):
 
     context = {}
     context['projectNameForm'] = form
-    return render(request, 'project/newProject.html', context)
+    return render_wrapper(request, 'project/newProject.html', context)
 
 def getProjectCfg(request):
     projectName = request.GET["projectName"]
@@ -360,11 +363,11 @@ from core import uc
 import base64
 
 class emulateForm(forms.Form):
-    tracepoints = forms.CharField(max_length=100, help_text='RWX Tracepoints', required=False)
+    tracepoints = forms.CharField(help_text='RWX Tracepoints', required=False)
     stdin = forms.CharField(help_text='Stdin Hex Dump', required=False)
 
 def emulate(request):
-    context = {}
+    context = {"success": False}
 
     projectName = request.GET["projectName"]
     project = getProjectByName(projectName)
@@ -378,12 +381,14 @@ def emulate(request):
         if form.is_valid():
             tracepoints = form.cleaned_data["tracepoints"]
             if len(tracepoints) > 2:
-                tracepoints = map(lambda x:int(x,16), tracepoints.split(","))
+                tracepoints = list(map(lambda x:int(x,16), tracepoints.split(",")))
             else:
                 tracepoints = []
 
             try:
-                stdin = unhexlify(form.cleaned_data["stdin"])
+                stdin = form.cleaned_data["stdin"]
+                stdin = stdin.replace(" ", "").replace("\n", "");
+                stdin = unhexlify(stdin)
             except:
                 import traceback; traceback.print_exc()
                 stdin = ""
@@ -412,6 +417,7 @@ def emulate(request):
             context["emulator"] = emulator
             context["drcov_b64"] = base64.b64encode(emulator.get_drcov())
             context["project"] = project
+            context["success"] = True
 
     else:
         form = emulateForm()
@@ -420,4 +426,4 @@ def emulate(request):
     context["projectName"] = projectName
     context["emulatorName"] = request.GET["emulatorName"]
 
-    return render(request, 'emulate.html', context)
+    return render_wrapper(request, 'emulate.html', context)

@@ -4,10 +4,21 @@
 
 <form action="emulate?projectName={{ projectName }}&emulatorName={{ emulatorName }}" method="POST">
   {% csrf_token %}
-  <table>
-    {{ emulateForm.as_table }}
+
+  <table style="width:100%">
+    <tr><th>Stdin (Hex)</th><th>Tracepoints</th></tr>
+    <tr>
+      <td>
+        <textarea id="stdin" name="stdin" rows="8" style="width:100%" onkeyup="update_stdin()"></textarea>
+      </td><td>
+        <textarea name="tracepoints" rows="8" style="width:100%">{{ emulateForm.cleaned_data.tracepoints }}</textarea>
+      </td>
+    </tr>
+    <tr>
+      <td colspan=2> <input type="submit" value="Run!" style="width:100%; height:40px; background:#001000"> </td>
+    </tr>
   </table>
-  <input type="submit" value="Run!">
+
 </form>
 
 <script>
@@ -16,38 +27,62 @@
     download("testcase.drcov", drcov);
   }
 </script>
-<button onclick="download_drcov()">Download Drcov</button> </br>
-
-<textarea id="hexdump" rows="8" cols="70" onkeyup="update_stdin()">
-</textarea>
-
 
 <script>
   function update_stdin() {
-    var stdin = document.getElementById('hexdump').value;
-    stdin = stdin.replace(/\n/g,'');
-    stdin = stdin.replace(/ /g,'');
-    document.getElementById('id_stdin').value = stdin;
+    var stdin = document.getElementById('stdin').value;
+    set_stdin(stdin);
   }
 
-  var stdin = document.getElementById('id_stdin').value
-  document.getElementById("hexdump").value = hexdump(stdin, 16);
+  function set_stdin(buffer) {
+    var lines = [];
+
+    buffer = buffer.replace(/[^0-9a-f\n]/gi,'');
+    var splitted = buffer.split('\n');
+    for (var b = 0; b < splitted.length; b += 1) {
+      var block = splitted[b];
+
+      vMaMa>ar chars = "";
+      for (var i = 0; i < block.length; i += 2) {
+        var hexchar = block.substr(i, 2);
+        chars +=  block.substr(i, 2);
+        if (hexchar.length == 2)
+          chars += " ";
+      }
+
+      lines.push(chars);
+
+    }
+    document.getElementById("stdin").value = lines.join("\n");
+  }
+
+  set_stdin("{{ emulateForm.cleaned_data.stdin }}");
 </script>
 
-<br>
-<h3>_start</h3> </br>
+
+{% if success %}
+  <br>
+  <hr>
+  <button onclick="download_drcov()">Download Code Coverage</button> </br>
+  <br>
+{% endif %}
 
 {% for t in emulator.results %}
     {% if t.stderr and t.stderr %}
-        <div id="output_term_{{ t.resid }}" style="width:90%"></div>
+        <div id="output_term_{{ t.resid }}" style="width:100%"></div>
         <script>
-          var term = new Terminal();
           var data = atob('{{ t.stderr }}').replace(/\n/g, '\r\n');
           var rows = data.split(/\r\n|\r|\n/).length;
+          var term = new Terminal();
           term.open(document.getElementById('output_term_{{ t.resid }}'));
           term.resize(120, Math.min(40, rows+1));
           term.setOption('fontSize', 12);
           term.write(data);
+
+          //disable scrollbar
+          var viewports = term.element.getElementsByClassName("xterm-viewport");
+          for (var i in viewports)
+            viewports[i].style.overflow = "auto"
         </script>
     {% endif %}
 
@@ -55,16 +90,16 @@
   <h3> {{ t.pc_symbolized }} - {{ t.reason }}</h3>
 </br>
     <!-- registers -->
-    <table>
+    <table style="width:100%">
       <tr>
-        <td>r0=0x{{ t.regs.r0 | stringformat:'x' }}</td>
-        <td>r1=0x{{ t.regs.r1 | stringformat:'x' }}</td>
-        <td>r2=0x{{ t.regs.r2 | stringformat:'x' }}</td>
-        <td>r3=0x{{ t.regs.r3 | stringformat:'x' }}</td>
-        <td>r4=0x{{ t.regs.r4 | stringformat:'x' }}</td>
-        <td>r5=0x{{ t.regs.r5 | stringformat:'x' }}</td>
-        <td>r6=0x{{ t.regs.r6 | stringformat:'x' }}</td>
-        <td>r7=0x{{ t.regs.r7 | stringformat:'x' }}</td>
+        <td style="width:12.5%">r0=0x{{ t.regs.r0 | stringformat:'x' }}</td>
+        <td style="width:12.5%">r1=0x{{ t.regs.r1 | stringformat:'x' }}</td>
+        <td style="width:12.5%">r2=0x{{ t.regs.r2 | stringformat:'x' }}</td>
+        <td style="width:12.5%">r3=0x{{ t.regs.r3 | stringformat:'x' }}</td>
+        <td style="width:12.5%">r4=0x{{ t.regs.r4 | stringformat:'x' }}</td>
+        <td style="width:12.5%">r5=0x{{ t.regs.r5 | stringformat:'x' }}</td>
+        <td style="width:12.5%">r6=0x{{ t.regs.r6 | stringformat:'x' }}</td>
+        <td style="width:12.5%">r7=0x{{ t.regs.r7 | stringformat:'x' }}</td>
       </tr><tr>
         <td>r8=0x{{ t.regs.r8 | stringformat:'x' }}</td>
         <td>r9=0x{{ t.regs.r9 | stringformat:'x' }}</td>
@@ -78,23 +113,46 @@
     </table>
   </br>
 
-    <div id="memdiff_term_{{ t.resid }}" style="width:90%"></div>
-    <hr>
-    <script>
-      var term = new Terminal();
-      var text = atob('{{ t.memdif_rendered }}').replace(/\n/g, '\r\n');
-      var rows = text.split(/\r\n|\r|\n/).length;
-      //term.resize(120, Math.min(rows, 80));
-      term.resize(120, Math.max(rows, 1));
-      term.setOption('fontSize', 12);
-      term.open(document.getElementById('memdiff_term_{{ t.resid }}'));
-      term.write(text);
-    </script>
+
+  <button type="button" class="collapsible">Show Memory Diff</button>
+  <div class="collapsibleContent" id="memdiff_term_{{ t.resid }}" style="width:100%"></div>
+
+  <script>
+    var memdiff_rendered_{{ t.resid }} = false;
+
+    function mediff_render_{{ t.resid }}() {
+      if( memdiff_rendered_{{ t.resid }} == false) {
+        memdiff_rendered_{{ t.resid }} = true;
+
+        var text = atob('{{ t.memdif_rendered }}').replace(/\n/g, '\r\n');
+        var rows = text.split(/\r\n|\r|\n/).length;
+        var term = new Terminal();
+        term.resize(120, Math.max(rows, 1));
+        term.setOption('fontSize', 12);
+        term.open(document.getElementById('memdiff_term_{{ t.resid }}'));
+        term.write(text);
+
+        //disable scrollbar
+        var viewports = term.element.getElementsByClassName("xterm-viewport");
+        for (var i in viewports)
+          viewports[i].style.overflow = "hidden";
+      }
+
+    }
+
+    var memdiff = document.getElementById("memdiff_term_{{ t.resid }}");
+    memdiff.ondisplay = mediff_render_{{ t.resid }};
+  </script>
+
+  <p></p>
 
 {% endfor %}
 
-<h3>Activity:</h3> </br>
-<div id="ActivityContainer" style="width: 100%;"> </div>
+{% if success %}
+  <h3>Activity:</h3> </br>
+  <div id="ActivityContainer" style="width: 100%;"> </div>
+{% endif %}
+
 
 <script>
   var coverage_activity = {{ emulator.coverage_activity_json|safe }};

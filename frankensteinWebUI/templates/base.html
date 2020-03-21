@@ -6,8 +6,6 @@
 <script src="/static/jquery-3.4.1.min.js"></script>
 
 
-<h1> Frankenstein Build System </h1>
-<hr>
 
 
 <script>
@@ -60,21 +58,42 @@
     //draw chart
     var chart = new CanvasJS.Chart(newDiv.id,
     {
+      backgroundColor: "#040404",
+
       zoomEnabled: true,
       title:{
-      text: title
+        fontColor:"#d08000",
+        text: title
       },
       axisX:{
+        lineColor: "#d08000",
+        tickColor: "#d08000",
+        fontColor:"#d08000",
+        titleFontColor:"#d08000",
+        labelFontColor:"#d08000",
+
         labelFormatter: function (e) {
                return "0x" + e.value.toString(16);  
         }
-       }, 
+       },
       axisY:{
+        lineColor: "#d08000",
+        tickColor: "#d08000",
+        fontColor:"#d08000",
+        titleFontColor:"#d08000",
+        labelFontColor:"#d08000",
+
         labelFormatter: function (e) {
-               return 2**e.value;  
+               return Math.floor(2**e.value);  
         }
       }, 
       toolTip:{
+        backgroundColor: "#040404",
+        fontColor:"#d08000",
+        borderColor: "#d08000",
+        cornerRadius: 0,
+        borderThickness: 1,
+
         shared: true,
         contentFormatter: function (e) {
           var addr = e.entries[0].dataPoint.x
@@ -86,35 +105,20 @@
           return "0x"+addr.toString(16);
         }
       },
+      legend: {
+        fontColor:"#d08000"
+        
+      },
       data: [
-        {type: "line", name: "Read", showInLegend: true, dataPoints: read},
-        {type: "line", name: "Write", showInLegend: true, dataPoints: write},
-        {type: "line", name: "Exec", showInLegend: true, dataPoints: exec},
+        {type: "line", name: "Read", showInLegend: true, dataPoints: read, color: "#00d000"},
+        {type: "line", name: "Write", showInLegend: true, dataPoints: write, color: "#d00000"},
+        {type: "line", name: "Exec", showInLegend: true, dataPoints: exec, color: "#d000d0"},
       ]
     });
 
     chart.render();
   }
 
-  function hexdump(buffer, blockSize) {
-    blockSize = blockSize*2 || 32;
-    var lines = [];
-    var hex = "0123456789ABCDEF";
-    for (var b = 0; b < buffer.length; b += blockSize) {
-      var block = buffer.slice(b, Math.min(b + blockSize, buffer.length));
-      var addr = ("0000" + (b/2).toString(16)).slice(-4);
-
-      var chars = "";
-      for (var i = 0; i < block.length; i += 2) {
-        chars +=  " " + block.substr(i, 2);
-      }
-
-      //chars += "   ".repeat(blockSize - block.length);
-      //lines.push(addr + " " + chars);
-      lines.push(chars);
-    }
-    return lines.join("\n");
-  }
 
   function create_reverse_symbol_lookup(symbols) {
     var reverse = {}
@@ -138,7 +142,51 @@
 
     document.body.removeChild(element);
   }
+
+
 </script>
 
-{% block content %}
-{% endblock %}
+
+<div class="topnav">
+  <h2> Frankenstein Build System </h2>
+</div>
+
+
+<div class="sidenav">
+  {% for projectName, emulators in projects.items %}
+    <a href="project?projectName={{ projectName }}">{{ projectName }} </a> <br>
+    {% for emulatorName in emulators %}
+      <a href="emulate?projectName={{ projectName }}&emulatorName={{ emulatorName }}">|--{{ emulatorName }}</a> <br>
+    {% endfor %}
+    <br>
+  {% endfor %}
+</div>
+
+
+<div class="main">
+  {% block content %}
+  {% endblock %}
+</div>
+
+
+
+
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    for (var i = 0; i < coll.length; i++) {
+      var content = coll[i].nextElementSibling;
+      content.style.display = "none";
+
+      coll[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+          if (typeof content.ondisplay != "undefined" && content.ondisplay != null)
+            content.ondisplay();
+        }
+      });
+    }
+</script>
