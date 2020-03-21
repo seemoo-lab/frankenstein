@@ -29,16 +29,18 @@ and notify the firmware for new HCI data
 */
 void hci_rx_poll(int timeout_ms) {
     if (hci_rx_fd == -1) return;
-    struct pollfd ufds;
-    int ret = 0;
 
     //setup poll for hci rx fd
+    struct pollfd ufds;
+    int ret = 0;
     ufds.fd = hci_rx_fd;
     ufds.events = POLLIN;
     ret = poll(&ufds, 1, timeout_ms);
+    if (ret <= 0) return; //No Data Available
 
-    //No Data Available
-    if (ret <= 0) return;
+    int count;
+    ioctl(hci_rx_fd, FIONREAD, &count);
+    if (count == 0) return;
 
     //classical receive
     sr_ptu_status_adr4 |= 0x04; //set register to data available

@@ -7,7 +7,6 @@ from binascii import hexlify, unhexlify
 import struct
 from subprocess import Popen, PIPE, STDOUT
 from random import getrandbits
-import angr
 import re
 import json
 
@@ -25,7 +24,7 @@ class emu:
 
         self.symbols = {}
         self.symbols_reverse = {}
-        for i in xrange(self.elf.num_sections()):
+        for i in range(self.elf.num_sections()):
             sec = self.elf.get_section(i)
             if sec.name == ".symtab":
                 for sym in sec.iter_symbols():
@@ -53,7 +52,7 @@ class emu:
         #loading prog headrs
         self.state = []
         self.segments = []
-        for i in xrange(self.elf.num_sections()):
+        for i in range(self.elf.num_sections()):
             section = self.elf.get_section(i)
             if section.header["sh_flags"] & SH_FLAGS.SHF_ALLOC != 0:
                 addr = section.header["sh_addr"]
@@ -63,7 +62,7 @@ class emu:
                 #NOBITS sections contains no data in file
                 #Will be initialized with zero
                 if section.header["sh_type"] == "SHT_NOBITS":
-                    data = "\x00" * size
+                    data = b"\x00" * size
                 else:
                     data = section.data()
 
@@ -98,10 +97,10 @@ class emu:
         if drcov:
             self.uc.hook_add(UC_HOOK_BLOCK, self.hook_bb, self)
 
-    def pagreesize(self, s):
-        if s % 4096 == 0:
+    def pagreesize(self, s, pagesize=1024):
+        if s % pagesize == 0:
             return s
-        return ((s / 4096) + 1) * 4096
+        return (int(s / pagesize) + 1) * pagesize
 
     """
     We need to emulate read and write for emulation
@@ -133,19 +132,20 @@ class emu:
                     if fd == 1:
                         self.stdout += data
                     else:
-                        self.stderr += data
-                        sys.stderr.write(data)
+                        self.stderr += data.decode("utf-8")
+                        sys.stderr.write(data.decode("utf-8"))
                     #sys.stdout.write(str(data))
                 else:
-                    print "unknown intr"
+                    print("unknown intr")
 
     """
     Implement memory and code watchpoints
     """
     @staticmethod
     def hook_bb(uc, address, size, self):
-        if address >= self.emulator_base_start and address < self.emulator_base_stop:
-            return
+        if self.emulator_base_start is not None:
+            if address >= self.emulator_base_start and address < self.emulator_base_stop:
+                return
         self.coverage_bb.add((address, size))
 
     @staticmethod
@@ -153,8 +153,9 @@ class emu:
         if address & 0xfffffffe == self.fw_entry & 0xfffffffe:
             self.trace_init_state()
 
-        if address >= self.emulator_base_start and address < self.emulator_base_stop:
-            return
+        if self.emulator_base_start is not None:
+            if address >= self.emulator_base_start and address < self.emulator_base_stop:
+                return
 
         self.coverage_pc.add(address)
         if address in self.coverage_activity:
@@ -168,8 +169,9 @@ class emu:
     @staticmethod
     def hook_mem_access(uc, access, address, size, value, self):
         pc = self.uc.reg_read(arm_const.UC_ARM_REG_R15)
-        if pc >= self.emulator_base_start and pc < self.emulator_base_stop:
-            return
+        if self.emulator_base_start is not None:
+            if pc >= self.emulator_base_start and pc < self.emulator_base_stop:
+                return
         if access == UC_MEM_WRITE:
             self.write.add((pc, address, value))
             if address in self.write_activity:
@@ -198,7 +200,7 @@ class emu:
         self.state = []
         for name, addr, size in self.segments:
             data = self.uc.mem_read(addr, size)
-            data = map(chr, data)
+            #data = list(map(chr, data))
             self.state += [(addr, size, data)]
         
 
@@ -208,13 +210,13 @@ class emu:
         memdiff = []
         for addr, size, data in self.state:
             new_data = self.uc.mem_read(addr, size)
-            new_data = map(chr, new_data)
+            #new_data = list(map(chr, new_data))
             if data != new_data:
                 new = old = ""
-                for i in xrange(len(data)):
+                for i in range(len(data)):
                     if data[i] != new_data[i]:
-                        old += hexlify(data[i])
-                        new += hexlify(new_data[i])
+                        old += "%02x" % data[i]
+                        new += "%02x" % new_data[i]
                     elif new != "":
                         memdiff += [(i+addr-len(new), old, new)]
                         new = old = ""
@@ -268,9 +270,9 @@ class emu:
         print_dots = False
         for addr, size, data in self.state:
             new_data = self.uc.mem_read(addr, size)
-            new_data = map(chr, new_data)
+            #new_data = list(map(chr, new_data))
             current_offset = 0
-            print len(data), len(new_data), size
+            print(len(data), len(new_data), size)
 
             #for each hexdump row
             while current_offset <  size:
@@ -287,13 +289,13 @@ class emu:
                     symbols = ""
 
                     #render diff
-                    for i in xrange(block_size):
+                    for i in range(block_size):
                         if new_row[i] == old_row[i]:
-                            hex_new += "%02x " % ord(new_row[i])
+                            hex_new += "%02x " % new_row[i]
                             hex_old += "   "
                         else:
-                            hex_new += "\033[;32m%02x\033[;00m " % ord(new_row[i])
-                            hex_old += "\033[;31m%02x\033[;00m " % ord(old_row[i])
+                            hex_new += "\033[;32m%02x\033[;00m " % new_row[i]
+                            hex_old += "\033[;31m%02x\033[;00m " % old_row[i]
 
                         if (addr + current_offset + i) in self.watchpoints:
                             symbols += "         |  "
@@ -355,42 +357,19 @@ class emu:
             print(hex(self.uc.reg_read(arm_const.UC_ARM_REG_PC)))
             self.trace_state_change(str(e))
 
-    def run_qemu(self):
-        prefix = "t-%016x" % getrandbits(64)
-        cmd = ["qemu-arm", "-trace", "translate_block,file=%s" % prefix, self.fname]
-        p = Popen(cmd)
-        p.communicate()
-
-        print "angr"
-        a = angr.Project(self.fname, auto_load_libs=False)
-        print "tracefile"
-        with open(prefix, "r") as f:
-            for line in f:
-                try:
-                    pc = re.findall("pc:0x[0-9a-f]*",line)[0][3:]
-                    pc = int(pc, 16)
-                    if pc < 0xbeee000:
-                        size = a.factory.block(pc+1).size
-                        self.coverage_bb.add((pc, size))
-                        
-                except:
-                    import traceback; traceback.print_exc()
-                    pass
-
-        print "qemu done"
 
     def get_drcov(self):
-        drcov = "DRCOV VERSION: 2\nDRCOV FLAVOR: drcov\n"
+        drcov = b"DRCOV VERSION: 2\nDRCOV FLAVOR: drcov\n"
 
-        drcov += "Module Table: version 2, count %d\n" % len(self.state)
-        drcov += "Columns: id, base, end, entry, path\n"
-        for i in xrange(len(self.state)):
+        drcov += b"Module Table: version 2, count %d\n" % len(self.state)
+        drcov += b"Columns: id, base, end, entry, path\n"
+        for i in range(len(self.state)):
             addr, size, _ = self.state[i]
-            drcov += "%d, 0x%x, 0x%x, 0x%x, %s\n" % (i, addr, addr+size+1, addr, "execute.exe")
+            drcov += b"%d, 0x%x, 0x%x, 0x%x, %s\n" % (i, addr, addr+size+1, addr, b"execute.exe")
 
-        drcov += "BB Table: %d bbs\n" % len(self.coverage_bb)
+        drcov += b"BB Table: %d bbs\n" % len(self.coverage_bb)
         for address, size in self.coverage_bb:
-            for module_id in xrange(len(self.state)):
+            for module_id in range(len(self.state)):
                 base_addr, module_size, _ = self.state[module_id]
                 if address >= base_addr and address <= base_addr + module_size:
                     break
@@ -405,8 +384,9 @@ class emu:
 
 
 if __name__ == "__main__":
-    #e = emu(sys.argv[1], sys.stdin.read(), map(lambda x: int(x, 16), sys.argv[2:]))
-    #e.run()
+    e = emu(sys.argv[1], sys.stdin.read(), map(lambda x: int(x, 16), sys.argv[2:]))
+    e.run()
+    sys.exit(0)
 
     
     e = emu(sys.argv[1], None, [])
@@ -420,7 +400,7 @@ if __name__ == "__main__":
         a = angr.Project(sys.argv[1], auto_load_libs=False)
         coverage = map(lambda x: x&0xffffffff, coverage)
         coverage = filter(lambda x: x<0xbeee000, coverage)
-        print coverage
+        print(coverage)
         coverage = map(lambda x: (x, a.factory.block(x+1).size), coverage)
         e.coverage_bb = coverage
 

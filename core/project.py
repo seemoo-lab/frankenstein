@@ -122,7 +122,7 @@ class Project:
                 name, value = line.split(",")
                 self.add_symbol(groupName, name, int(value, 16))
             except:
-                print line
+                print(line)
                 import traceback; traceback.print_exc()
 
         self.save()
@@ -166,7 +166,7 @@ class Project:
                         name = symbol.name
                         value = symbol.entry["st_value"]
                         typ = symbol.entry["st_info"]["type"] # STT_NOTYPE STT_FUNC STT_FILE
-                        print typ, name, value
+                        print (typ, name, value)
                         self.add_symbol(group, name, value)
             self.save()
 
@@ -183,7 +183,7 @@ class Project:
     #                    data = api.ida_bytes.get_bytes(addr, size) #seems to fail sometimes
     #                    name = api.idaapi.get_segm_name(addr)
     #                    name = "%s_%s_0x%x" % (os.path.basename(fname), name, addr)
-    #                    print name
+    #                    print(name)
     #                    self.add_segment(group, name, addr, data)
     #                except:
     #                    import traceback; traceback.print_exc()
@@ -527,7 +527,7 @@ class Project:
     def symbolize(self, addr):
         next_symbol = str(addr)
         next_addr = 0
-        for name, x in self.cfg["symbols"].iteritems():
+        for name, x in self.cfg["symbols"].items():
             if addr == x:
                 return name
 
@@ -750,7 +750,7 @@ class Project:
 if __name__ == "__main__":
     import sys
     p = Project(sys.argv[1])
-    print p.symbolize(int(sys.argv[2],16))
+    print(p.symbolize(int(sys.argv[2],16)))
     #p.load_symbol_csv(sys.argv[2], "global")
     #name = "Nexus 5 Bluetooth"
     #os.system("rm -rf /tmp/test_project")

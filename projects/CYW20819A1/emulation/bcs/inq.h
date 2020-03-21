@@ -25,8 +25,8 @@ void inquiry() {
         sr_status =  0x1c8;
         phy_status = 0x3;
 
-        read(0, &pkt_hdr_status, 2);
-        read(0, &pkt_log, 2);
+        read(inq_fd, &pkt_hdr_status, 2);
+        read(inq_fd, &pkt_log, 2);
         pkt_hdr_status |= 0x40000;
         pkt_log |= 0x40000;
 
@@ -74,7 +74,7 @@ void inquiry() {
         phy_status = 0x1;
 
         if (rtx_dma_ctl != 3 && dmaActiveRxBuffer) {
-            if (read(0, dmaActiveRxBuffer, 240) < 1) exit(1);
+            if (read(inq_fd, dmaActiveRxBuffer, 240) < 1) exit(1);
             print_var(dmaActiveRxBuffer);
             for (unsigned char i=0; i < 240; i++) dmaActiveRxBuffer[i] = i; 
             print("pcktdata: ");
@@ -83,7 +83,7 @@ void inquiry() {
         }
         else {
             print("pcktdata: ");
-            read(0, 0x370000, 16);
+            read(inq_fd, 0x370000, 16);
             hexdump(0x370000, 16);
             print("\n");
             //char fhs[] = "\x70\x21\xc9\x74\xaf\x83\xc0\x6c\xff\x5a\x48\x8d\x5a";

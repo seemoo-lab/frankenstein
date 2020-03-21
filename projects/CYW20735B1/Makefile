@@ -1,9 +1,9 @@
 EMULATION_CFLAGS=-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I ../common  -I /usr/include -D FRANKENSTEIN_EMULATION
-TOOLCHAIN=arm-none-eabi-
-PATCH_CODE_BASE=0x271a00
-thumb_mode=0x1
 EMULATION_CODE_BASE=0xbeef000
 PATCH_CFLAGS=-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../common
+PATCH_CODE_BASE=0x271a00
+TOOLCHAIN=arm-none-eabi-
+thumb_mode=0x1
 
 .PHONY=all
 

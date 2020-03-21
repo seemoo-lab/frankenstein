@@ -528,7 +528,6 @@ addUpdateCallback(sanity_check);
       <th>Start</th>
       <th>Stop</th>
       <th>Size</th>
-      <th></th>
     </tr>
   </thead>
 
@@ -545,15 +544,19 @@ addUpdateCallback(sanity_check);
 
 {% endfor %}
 
-<h3>Symbols</h3>
 
-<hr>
 
 <br>
+<hr>
+
+<h3>Symbol Search</h3>
 
 Symbol Name <input type="text" id="symbolNameFilter" onkeyup="filter_symbols()"></input>
 Group Name <input type="text" id="symbolGroupFilter" onkeyup="filter_symbols()"></input>
 Addr <input type="text" id="symbolAddFilterr" onkeyup="filter_symbols()"></input>
+
+<h3>Symbols</h3>
+
 <!-- Symbol Table -->
 <table>
   <thead><td>Group</td><td>Name</td><td>Address</td></thead>

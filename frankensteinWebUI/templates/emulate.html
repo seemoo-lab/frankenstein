@@ -34,64 +34,66 @@
   document.getElementById("hexdump").value = hexdump(stdin, 16);
 </script>
 
+<br>
+<h3>_start</h3> </br>
 
-  {% for t in emulator.results %}
-      {% if t.stderr and t.stderr %}
-          <div id="output_term_{{ t.resid }}" style="width:90%"></div>
-          <script>
-            var term = new Terminal();
-            var data = atob('{{ t.stderr }}').replace(/\n/g, '\r\n');
-            var rows = data.split(/\r\n|\r|\n/).length;
-            term.open(document.getElementById('output_term_{{ t.resid }}'));
-            term.resize(120, Math.min(40, rows));
-            term.setOption('fontSize', 12);
-            term.write(data);
-          </script>
-      {% endif %}
+{% for t in emulator.results %}
+    {% if t.stderr and t.stderr %}
+        <div id="output_term_{{ t.resid }}" style="width:90%"></div>
+        <script>
+          var term = new Terminal();
+          var data = atob('{{ t.stderr }}').replace(/\n/g, '\r\n');
+          var rows = data.split(/\r\n|\r|\n/).length;
+          term.open(document.getElementById('output_term_{{ t.resid }}'));
+          term.resize(120, Math.min(40, rows+1));
+          term.setOption('fontSize', 12);
+          term.write(data);
+        </script>
+    {% endif %}
 
+</br>
+  <h3> {{ t.pc_symbolized }} - {{ t.reason }}</h3>
+</br>
+    <!-- registers -->
+    <table>
+      <tr>
+        <td>r0=0x{{ t.regs.r0 | stringformat:'x' }}</td>
+        <td>r1=0x{{ t.regs.r1 | stringformat:'x' }}</td>
+        <td>r2=0x{{ t.regs.r2 | stringformat:'x' }}</td>
+        <td>r3=0x{{ t.regs.r3 | stringformat:'x' }}</td>
+        <td>r4=0x{{ t.regs.r4 | stringformat:'x' }}</td>
+        <td>r5=0x{{ t.regs.r5 | stringformat:'x' }}</td>
+        <td>r6=0x{{ t.regs.r6 | stringformat:'x' }}</td>
+        <td>r7=0x{{ t.regs.r7 | stringformat:'x' }}</td>
+      </tr><tr>
+        <td>r8=0x{{ t.regs.r8 | stringformat:'x' }}</td>
+        <td>r9=0x{{ t.regs.r9 | stringformat:'x' }}</td>
+        <td>r10=0x{{ t.regs.r10 | stringformat:'x' }}</td>
+        <td>r11=0x{{ t.regs.r11 | stringformat:'x' }}</td>
+        <td>r12=0x{{ t.regs.r12 | stringformat:'x' }}</td>
+        <td>sp=0x{{ t.regs.sp | stringformat:'x' }}</td>
+        <td>lr=0x{{ t.regs.lr | stringformat:'x' }}</td>
+        <td>pc=0x{{ t.regs.pc | stringformat:'x' }}</td>
+      </tr>
+    </table>
   </br>
-    <h3> {{ t.pc_symbolized }} - {{ t.reason }}</h3>
-  </br>
-      <!-- registers -->
-      <table>
-        <tr>
-          <td>r0=0x{{ t.regs.r0 | stringformat:'x' }}</td>
-          <td>r1=0x{{ t.regs.r1 | stringformat:'x' }}</td>
-          <td>r2=0x{{ t.regs.r2 | stringformat:'x' }}</td>
-          <td>r3=0x{{ t.regs.r3 | stringformat:'x' }}</td>
-          <td>r4=0x{{ t.regs.r4 | stringformat:'x' }}</td>
-          <td>r5=0x{{ t.regs.r5 | stringformat:'x' }}</td>
-          <td>r6=0x{{ t.regs.r6 | stringformat:'x' }}</td>
-          <td>r7=0x{{ t.regs.r7 | stringformat:'x' }}</td>
-        </tr><tr>
-          <td>r8=0x{{ t.regs.r8 | stringformat:'x' }}</td>
-          <td>r9=0x{{ t.regs.r9 | stringformat:'x' }}</td>
-          <td>r10=0x{{ t.regs.r10 | stringformat:'x' }}</td>
-          <td>r11=0x{{ t.regs.r11 | stringformat:'x' }}</td>
-          <td>r12=0x{{ t.regs.r12 | stringformat:'x' }}</td>
-          <td>sp=0x{{ t.regs.sp | stringformat:'x' }}</td>
-          <td>lr=0x{{ t.regs.lr | stringformat:'x' }}</td>
-          <td>pc=0x{{ t.regs.pc | stringformat:'x' }}</td>
-        </tr>
-      </table>
-    </br>
 
-      <div id="memdiff_term_{{ t.resid }}" style="width:90%"></div>
-      <hr>
-      <script>
-        var term = new Terminal();
-        var text = atob('{{ t.memdif_rendered }}').replace(/\n/g, '\r\n');
-        var rows = text.split(/\r\n|\r|\n/).length;
-        //term.resize(120, Math.min(rows, 80));
-        term.resize(120, Math.max(rows, 1));
-        term.setOption('fontSize', 12);
-        term.open(document.getElementById('memdiff_term_{{ t.resid }}'));
-        term.write(text);
-      </script>
+    <div id="memdiff_term_{{ t.resid }}" style="width:90%"></div>
+    <hr>
+    <script>
+      var term = new Terminal();
+      var text = atob('{{ t.memdif_rendered }}').replace(/\n/g, '\r\n');
+      var rows = text.split(/\r\n|\r|\n/).length;
+      //term.resize(120, Math.min(rows, 80));
+      term.resize(120, Math.max(rows, 1));
+      term.setOption('fontSize', 12);
+      term.open(document.getElementById('memdiff_term_{{ t.resid }}'));
+      term.write(text);
+    </script>
 
-  {% endfor %}
+{% endfor %}
 
-<h1>Activity:</h1> </br>
+<h3>Activity:</h3> </br>
 <div id="ActivityContainer" style="width: 100%;"> </div>
 
 <script>

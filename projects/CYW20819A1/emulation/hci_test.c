@@ -6,12 +6,12 @@
 
 void hci_idle_loop() {
     while(1) {
-        bcs_tick();
-        contextswitch();
-        check_and_handle_timers(1000);
-        contextswitch();
+        //bcs_tick();
+        //contextswitch();
+        //check_and_handle_timers(1000);
+        //contextswitch();
         hci_rx_poll(1);
-        contextswitch();
+        //contextswitch();
     }
 }
 
@@ -24,7 +24,7 @@ void _start() {
     hci_tx_fd = 1;
 
     int rnd = open("/dev/urandom", O_RDONLY);
-    //acl_fd = rnd;
+    acl_fd = rnd;
     inq_fd = rnd;
     page_fd = rnd;
     le_fd = rnd;

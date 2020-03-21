@@ -171,7 +171,6 @@ def editConfig(request):
             if not project.set_patch_config(form.cleaned_data["patchCFlags"], int(form.cleaned_data["patchCodeBase"], 16)):
                 succsess = False
 
-            print succsess
             if succsess:
                 project.save()
 
@@ -400,15 +399,15 @@ def emulate(request):
             for r in results:
                 del r["stdout"]
                 r["pc_symbolized"] = project.symbolize(r["regs"]["pc"])
-                r["stderr"] = base64.b64encode(str(r["stderr"]))
-                r["memdif_rendered"] = base64.b64encode(r["memdif_rendered"])
-                r["memdif_html"] = base64.b64encode(conv.convert(r["memdif_rendered"]))
+                r["stderr"] = base64.b64encode(r["stderr"].encode("utf-8")).decode("utf-8")
+                r["memdif_rendered"] = base64.b64encode(r["memdif_rendered"].encode("utf-8")).decode("utf-8")
+                r["memdif_html"] = base64.b64encode(conv.convert(r["memdif_rendered"]).encode("utf-8")).decode("utf-8")
 
             emulator.coverage_activity_json = json.dumps(emulator.coverage_activity)
             emulator.read_activity_json = json.dumps(emulator.read_activity)
             emulator.write_activity_json = json.dumps(emulator.write_activity)
 
-            #context["segments"] = sorted(project.cfg["segments"].iteritems(), key=lambda x: x[1]["addr"])
+            #context["segments"] = sorted(project.cfg["segments"].items(), key=lambda x: x[1]["addr"])
             context["symbols_json"] = json.dumps(project.cfg["symbols"])
             context["emulator"] = emulator
             context["drcov_b64"] = base64.b64encode(emulator.get_drcov())
