@@ -1,0 +1,95 @@
+textarea, body,input,button,dialog {
+    background-color: #040404;
+    color: #d08000;
+    font-family: monaco, monospace;
+}
+
+textarea, input,button,dialog {
+    border: 1px solid #d08000;
+    background:#101010
+}
+
+textarea:hover, input:hover, button:hover {
+    background:#303030
+}
+
+textarea:focus, input:focus, button:focus {
+    outline: none;
+    border: 1px solid #00d000
+}
+
+
+hr {
+    border: 2px solid #d08000;
+}
+
+a {
+    text-decoration: none;
+    color: #d08000;
+}
+
+
+a:hover {
+    color: #aaaaaa
+    /* text-decoration: underline; */
+}
+
+.hoverTable:hover td {
+    background:#303030
+}
+
+
+
+table {
+    border-collapse: collapse;
+}
+
+
+table, th, td {
+    border: 1px solid #d08000;
+}
+
+
+.xterm {
+    overflow: none;
+    border: 2px solid #ff0000;
+    border: 1px solid #d08000;
+}
+
+
+.collapsibleContent {
+    overflow: hidden;
+}
+
+
+.topnav {
+    width: 100%;
+    height: 60px;
+    position: fixed;
+    z-index: 100000;
+    background:#101000;
+    top: 0;
+    left: 0;
+}
+
+.sidenav {
+    height: 100%;
+    width: 180px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+
+    overflow-x: hidden;
+    padding-top: 100px;
+
+    background:#101000;
+}
+
+.main {
+    margin-top: 90px;
+    width: 70%;
+    margin-left: 160px;
+    padding: 0px 100px;
+}
+

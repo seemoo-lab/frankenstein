@@ -50,5 +50,7 @@ void _start() {
     //still do not know, why this crashes....
     patch_jump(rm_getBBConnectedACLUsage, ret0);
 
+    print_var(installed_hooks);
+
     cont();
 }
