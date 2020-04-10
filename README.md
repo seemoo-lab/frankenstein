@@ -7,7 +7,9 @@ To do so, the firmware image needs to be reassembled to an ELF file that can be
 executed with QEMU. The firmware image reassembly is simplified by a web-based UI.
  
 *Frankenstein* is currently optimized for the *CYW20735* Bluetooth evaluation board. 
+The slightly newer *CYW20819* Bluetooth evaluation board is already partially supported.
 We are working on support for the *Samsung Galaxy S10e*.
+
 
 Table of Contents
 ------------
@@ -22,11 +24,11 @@ Table of Contents
  *  Vulnerabilities
     * [EIR RCE Exploit (CVE-2019-11516)](doc/CVE_2019_11516)
     * [LE Heap Overflow  (CVE-2019-13916)](doc/CVE_2019_13916)
-    * Bluefrag (CVE-2020-0022) - To be disclosed or look at our [fuzzer](projects/CYW20735B1/patch/aclfuzz.c)
+    * BlueFrag (CVE-2020-0022) - To be disclosed, fixed in the Android February 2020 release. Look at our ACL [fuzzer](projects/CYW20735B1/patch/aclfuzz.c).
 
-  * Misc
+  * Miscellaneous
     * [Project Structure](doc/projects)
-    * [Thesis](doc/Thesis.pdf)
+    * Master [Thesis](doc/Thesis.pdf) by Jan Ruge
 
 
 Basic Setup
@@ -38,7 +40,7 @@ The Makefile and linker scripts are generated automatically by the build system.
 The build system can be launched by the following command and navigating the browser to [http://127.0.0.1:8000/](http://127.0.0.1:8000)
 
 
-    python2 manage.py runserver
+    python3 manage.py runserver
 
 
 
@@ -114,7 +116,7 @@ with some of these even returning mal-formatted names.
 Reproducing CVEs
 ----------------
 
-To trigger [CVE-2019-11516](doc/CVE_2019_11516), simply run `hcitool -i hci1 scan` and wait a couple of seconds to minutes.
+To trigger [CVE-2019-11516](doc/CVE_2019_11516), run `hcitool -i hci1 scan` and wait a couple of seconds to minutes.
 
     Context switch idle -> lm
     lr=0x02d12f lm_handleInqFHS(0x40)lr=0x02cc53 lc_handleInqResult(0x21fb1c)lr=0x041d91 inqfilter_isBdAddrRegistered(0x21fb24, 0x0);
@@ -175,7 +177,7 @@ It is used in a custom *InternalBlue* extension `internalBlueMod.py`.
 If you are running on a native *Linux* and want to access the raw HCI device,
 you need superuser rights.
 
-    (sudo) python internalBlueMod.py
+    (sudo) python3 internalBlueMod.py
 
 In this extension, we can run the following command to generate a re-executable state:
 
@@ -211,7 +213,7 @@ Live Heap Sanitizer
 
 Run our customized *InternalBlue* script on real hardware:
 
-    (sudo) python2 internalBlueMod.py
+    (sudo) python3 internalBlueMod.py
     
 Load the heap sanitizer patch on top:
 
@@ -238,9 +240,9 @@ Compilation of the project requires `gcc-arm-none-eabi`.
 
 Tested with `qemu-user (1:3.1+dfsg+8+deb10u2)` and `gcc-arm-none-eabi (15:7-2018-q2-6)` and `gcc-multilib (4:8.3.0-1)`. 
 
-The following Python 2 packets are required:
+The following Python 3 packets are required:
 
-    pip2 install django pyelftools==0.24
+    pip3 install django pyelftools==0.24
     
 Tested with `django-1.11.24`.
 
