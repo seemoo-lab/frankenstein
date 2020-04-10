@@ -1,4 +1,4 @@
-# Frankenstein
+![alt text](doc/images/logo.jpg)
 
 *Frankenstein* provides a virtual environment to fuzz wireless firmwares.
 Firmwares can be hooked during runtime to extract their current state (i.e., `xmitstate` through *InternalBlue*).
@@ -8,6 +8,26 @@ executed with QEMU. The firmware image reassembly is simplified by a web-based U
  
 *Frankenstein* is currently optimized for the *CYW20735* Bluetooth evaluation board. 
 We are working on support for the *Samsung Galaxy S10e*.
+
+Table of Contents
+------------
+ *  Getting Started
+    * [Basic Setup](#basic-setup)
+    * [Attach Firmware to Host](#attaching-the-firmware-to-a-host)
+    * [Reproducing CVEs](#reproducing-cves)
+    * [Custom Firmware States](#dumping-custom-states)
+    * [Heap Sanitizer](#live-heap-sanitizer)
+    * [Dependencies](#important-notes--dependencies)
+
+ *  Vulnerabilities
+    * [EIR RCE Exploit (CVE-2019-11516)](doc/CVE_2019_11516)
+    * [LE Heap Overflow  (CVE-2019-13916)](doc/CVE_2019_13916)
+    * Bluefrag (CVE-2020-0022) - To be disclosed or look at our [fuzzer](projects/CYW20735B1/patch/aclfuzz.c)
+
+  * Misc
+    * [Project Structure](doc/projects)
+    * [Thesis](doc/Thesis.pdf)
+
 
 Basic Setup
 ------------
@@ -19,6 +39,7 @@ The build system can be launched by the following command and navigating the bro
 
 
     python2 manage.py runserver
+
 
 
 The build system already contains symbols and an initial memory dump. You can browse through the available projects
@@ -42,9 +63,11 @@ do not have any of our supported hardware, you can skip the `xmitstate` step lat
 After rebuilding the project using `make -C projects/CYW20735B1`, the firmware state can be emulated, until the `Idle` thread is entered.
 For this, execute:
 
-
     qemu-arm projects/CYW20735B1/gen/execute.exe
 
+Or execute it from the web frontend and get even more insights:
+
+![alt text](doc/images/webui.png)
 
 Attaching the Firmware to a Host
 ---------------------------------
@@ -91,7 +114,7 @@ with some of these even returning mal-formatted names.
 Reproducing CVEs
 ----------------
 
-To trigger [CVE-2019-11516](projects/CYW20735B1/patch/CVE_2019_11516), simply run `hcitool -i hci1 scan` and wait a couple of seconds to minutes.
+To trigger [CVE-2019-11516](doc/CVE_2019_11516), simply run `hcitool -i hci1 scan` and wait a couple of seconds to minutes.
 
     Context switch idle -> lm
     lr=0x02d12f lm_handleInqFHS(0x40)lr=0x02cc53 lc_handleInqResult(0x21fb1c)lr=0x041d91 inqfilter_isBdAddrRegistered(0x21fb24, 0x0);
@@ -115,7 +138,7 @@ To trigger [CVE-2019-11516](projects/CYW20735B1/patch/CVE_2019_11516), simply ru
 For debugging purposes, our heap sanitizer is currently writing `0x42` to released memory.
  
 
-Now let's trigger [CVE-2019-13916](projects/CYW20735B1/patch/CVE_2019_13916). As this vulnerability is within parsing of BLE PDUs,
+Now let's trigger [CVE-2019-13916](doc/CVE_2019_13916). As this vulnerability is within parsing of BLE PDUs,
 all you need to do is to successfully establish a connection to another LE device. If you
 connect to random addresses, this will succeed at some point in time. Usually, this takes 
 a couple of minutes and in some cases the emulator crashes instead and you need to restart
@@ -176,7 +199,7 @@ again.
 If you were running *InternalBlue* with `sudo`, you might need to adjust access rights to the
 generated state. To do so, run:
 
-    sudo chown -R 1000.1000 projects/CYW20735B1/segment_groups/
+    sudo chown -R $USER:$USER projects/CYW20735B1/segment_groups/
 
 Now, build the project again:
 
@@ -223,6 +246,3 @@ Tested with `django-1.11.24`.
 
 
 
-Project Structure
------------------
-[projects/](projects/)

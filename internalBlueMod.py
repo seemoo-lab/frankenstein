@@ -51,7 +51,7 @@ class CmdLoadELF(internalblue.cmds.Cmd):
                 self.launchRam(fini-1)
 
         #load sections
-        for i in xrange(self.elf.num_sections()):
+        for i in range(self.elf.num_sections()):
             section = self.elf.get_section(i)
             if section.header["sh_flags"] & SH_FLAGS.SHF_ALLOC != 0:
                 addr = section.header["sh_addr"]
@@ -60,7 +60,7 @@ class CmdLoadELF(internalblue.cmds.Cmd):
                 #NOBITS sections contains no data in file
                 #Will be initialized with zero
                 if section.header["sh_type"] == "SHT_NOBITS":
-                    data = "\x00" * section.header["sh_size"]
+                    data = b"\x00" * section.header["sh_size"]
                 else:
                     data = section.data()
 
@@ -72,7 +72,7 @@ class CmdLoadELF(internalblue.cmds.Cmd):
 
         #load symbols
         n = 0
-        for i in xrange(self.elf.num_sections()):
+        for i in range(self.elf.num_sections()):
             section = self.elf.get_section(i)
             if section.header.sh_type == 'SHT_SYMTAB':
                 for symbol in section.iter_symbols():
@@ -119,7 +119,7 @@ class CmdLoadELF(internalblue.cmds.Cmd):
         global CmdLoadELFInitialized
         if not CmdLoadELFInitialized:
             if self.internalblue.fw.FW_NAME == "CYW20735B1":
-                self.internalblue.patchRom(0x3d32e, "\x70\x47\x70\x47")
+                self.internalblue.patchRom(0x3d32e, b"\x70\x47\x70\x47")
             self.internalblue.registerHciCallback(self.debug_hci_callback)
             CmdLoadELFInitialized = True
 
@@ -169,7 +169,7 @@ class CmdMapMemory(CmdLoadELF):
             elif addr & 1 == 0:
                 if self.expected_addr != addr:
                     if self.expected_addr != -1:
-                        print "Found Map 0x%x - 0x%x" % (self.segment_start, self.expected_addr)
+                        print ("Found Map 0x%x - 0x%x" % (self.segment_start, self.expected_addr))
 
                     self.segment_start = addr
                 self.expected_addr = addr + 256
@@ -277,7 +277,7 @@ class CmdXmitState(CmdLoadELF):
             #Check if we have missed an HCI event
             if segment_addr + len(self.segment_data)*128 != current + 128:
                 if self.succsess:
-                    print  hex(segment_addr), hex(len(self.segment_data)*128), hex( current + 128)
+                    print( hex(segment_addr), hex(len(self.segment_data)*128), hex( current + 128))
                     log.info("Failed to receive state")
                 self.succsess = False
                 
@@ -302,9 +302,9 @@ class CmdXmitState(CmdLoadELF):
 
             # disable uart_SetRTSMode if we know its location
             if self.internalblue.fw.FW_NAME == "CYW20735B1":
-                self.internalblue.patchRom(0x3d32e, "\x70\x47\x70\x47")
+                self.internalblue.patchRom(0x3d32e, b"\x70\x47\x70\x47")
             elif self.internalblue.fw.FW_NAME == "CYW20819A1":
-                self.internalblue.patchRom(0x2330e, "\x70\x47\x70\x47")
+                self.internalblue.patchRom(0x2330e, b"\x70\x47\x70\x47")
 
             # and now let's enable the callbacks
             self.internalblue.registerHciCallback(self.debug_hci_callback)
@@ -313,7 +313,7 @@ class CmdXmitState(CmdLoadELF):
 
 
         patch = "projects/%s/gen/xmit_state.patch" % self.internalblue.fw.FW_NAME
-        print patch
+        print(patch)
         if not os.path.exists(patch):
             log.warn("Could not find file %s" % patch)
             return False
@@ -334,4 +334,4 @@ internalblue.cmds.CmdXmitState = CmdXmitState
 
 
 if __name__ == "__main__":
-    internalblue.cli.internalblue_cli()
+    internalblue.cli.internalblue_cli(sys.argv[1:])
