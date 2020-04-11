@@ -8,7 +8,10 @@ executed with QEMU. The firmware image reassembly is simplified by a web-based U
  
 *Frankenstein* is currently optimized for the *CYW20735* Bluetooth evaluation board. 
 The slightly newer *CYW20819* Bluetooth evaluation board is already partially supported.
-We are working on support for the *Samsung Galaxy S10e*.
+The port to the *CYW20819* evaluation board is required due to [CVE-2019-18614](doc/CVE_2019_18614.md), 
+which prevents further fuzzing of connection states such as music streaming or tethering.
+We are working on support for the *Samsung Galaxy S10/S20*—all of the European *S10e/S10/S10+/Note 10/S20* models
+feature the same chip.
 
 
 Table of Contents
@@ -24,6 +27,7 @@ Table of Contents
  *  Vulnerabilities
     * [EIR RCE Exploit (CVE-2019-11516)](doc/CVE_2019_11516.md)
     * [LE Heap Overflow  (CVE-2019-13916)](doc/CVE_2019_13916,md)
+    * [Device to Host and Host to Device Buffer Misconfiguration (CVE-2019-18614])](doc/CVE_2019_18614.md)
     * BlueFrag (CVE-2020-0022) - To be disclosed, fixed in the Android February 2020 release. Look at our ACL [fuzzer](projects/CYW20735B1/patch/aclfuzz.c).
 
   * Miscellaneous
