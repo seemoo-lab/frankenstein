@@ -234,7 +234,6 @@ int _puts(const char *x);
 #define DEBUG
 #ifdef DEBUG
     #define print_ptr(x) _print_ptr((size_t)x)
-    //#define print(x) {char _x[] = x; write(2, (_x), strlen(_x));}
     #define print(x) puts(x);
     int puts(const char *s) { write(2, (s), strlen(s));}
     #define print_var(x) {print(#x" = "); print_ptr(x); print("\n");}

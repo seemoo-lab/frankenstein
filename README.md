@@ -22,12 +22,12 @@ Table of Contents
     * [Dependencies](#important-notes--dependencies)
 
  *  Vulnerabilities
-    * [EIR RCE Exploit (CVE-2019-11516)](doc/CVE_2019_11516)
-    * [LE Heap Overflow  (CVE-2019-13916)](doc/CVE_2019_13916)
+    * [EIR RCE Exploit (CVE-2019-11516)](doc/CVE_2019_11516.md)
+    * [LE Heap Overflow  (CVE-2019-13916)](doc/CVE_2019_13916,md)
     * BlueFrag (CVE-2020-0022) - To be disclosed, fixed in the Android February 2020 release. Look at our ACL [fuzzer](projects/CYW20735B1/patch/aclfuzz.c).
 
   * Miscellaneous
-    * [Project Structure](doc/projects)
+    * [Project Structure](doc/projects.md)
     * Master [Thesis](doc/Thesis.pdf) by Jan Ruge
 
 

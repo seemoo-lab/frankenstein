@@ -41,10 +41,10 @@ void dynamic_memory_check_free_list(char *msg, int show_regs) {
     void **free_chunk;
 
     do {
-        free_chunk = pool->free_list;
+        free_chunk = &pool->free_list;
         do {
-            if ((size_t)free_chunk < (size_t)pool->block_start || 
-                (size_t)free_chunk > (size_t)pool->block_start + ((pool->size+4) * pool->capacity)) {
+            if ((size_t)*free_chunk < (size_t)pool->block_start || 
+                (size_t)*free_chunk > (size_t)pool->block_start + ((pool->size+4) * pool->capacity)) {
                 print("Heap Corruption Detected\n");
                 print(msg);
                 if (show_regs) {
@@ -58,13 +58,18 @@ void dynamic_memory_check_free_list(char *msg, int show_regs) {
                 print_var(pool->block_start);
                 print_var(pool->capacity);
                 print_var(pool->size);
-                print_var(free_chunk);
-                print("\n");
+                print_var(*free_chunk);
+                #ifdef FRANKENSTEIN_EMULATION
+                    hexdump(free_chunk, 4);
+                    print(" | ")
+                    hexdump(free_chunk + 4, pool->size);
+                    print("\n");
+                #endif
                 //Trigger crash
                 ((void (*)(void))(free_chunk + 0xf0000000))();
             }
             free_chunk = *free_chunk;
-        } while(free_chunk);
+        } while(*free_chunk);
 
         pool = pool->next;
     } while (pool);
