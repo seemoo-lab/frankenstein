@@ -25,6 +25,7 @@ Table of Contents
     * [Dependencies](#important-notes--dependencies)
 
  *  Vulnerabilities
+    * [ThreadX Heap Exploitation](doc/heap.md)
     * [EIR RCE Exploit (CVE-2019-11516)](doc/CVE_2019_11516.md)
     * [LE Heap Overflow  (CVE-2019-13916)](doc/CVE_2019_13916,md)
     * [Device to Host and Host to Device Buffer Misconfiguration (CVE-2019-18614)](doc/CVE_2019_18614.md)
