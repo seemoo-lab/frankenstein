@@ -94,7 +94,7 @@ class CmdLoadELF(internalblue.cmds.Cmd):
         #We use event code 0xfe for info text messages
         #Buffer messages until a newline is found
         if hcipkt.event_code == 0xfe:
-            self.msg += hcipkt.data
+            self.msg += hcipkt.data.decode("utf-8")
             while "\n" in self.msg:
                 msg_split = self.msg.split("\n")
                 log.info("Firmware says: %s" % msg_split[0])
