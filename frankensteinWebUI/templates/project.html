@@ -197,29 +197,6 @@ addUpdateCallback(loadELFUpdateGroupOptions);
 
 
 
-<!-- Add Symbol Dialog -->
-<dialog close id="addSymbolDialog">
-  <h4 id="addSymbolDialogTitle">Add Symbol</h4>
-  <form action="editSymbol" id="addSymbolDialogForm" method="POST">
-    {% csrf_token %}
-    <input type="hidden" id="projectName" name="projectName" value="{{ projectName }}">
-    <input type="hidden" name="oldGroupName" id="addSymbolOldName" value="dummy" /> <br>
-    <input type="hidden" name="oldSymbolName" id="addSymbolOldName" value="dummy" /> <br>
-    Name <input type="text" name="newSymbolName" id="addSymbolNewName" value="" style="width:100%"/> <br>
-    Value <input type="text" name="value" id="addSymbolValue" value="" style="width:100%"/> <br>
-    Group <select name="newGroupName" id="addSymbolGroupSelect" size="1"></select> <br>
-    <input type="button" value="Add" onclick="submitDialogForm('addSymbolDialog', 'actionAdd')" />
-  </form>
-  <pre id="addSymbolDialogMsg"></pre>
-</dialog>
-
-<script>
-function addSymbolupdateGroupOptions() {
-  updateGroupOptions("addSymbolGroupSelect", "global");
-}
-
-addUpdateCallback(addSymbolupdateGroupOptions);
-</script>
 
 <!--
  ____  _       _                 
@@ -297,6 +274,36 @@ addUpdateCallback(addSymbolupdateGroupOptions);
   }
 </script>
 
+<!-- Add Symbol Dialog -->
+<dialog close id="addSymbolDialog">
+  <h4 id="addSymbolDialogTitle">Add Symbol</h4>
+  <form action="editSymbol" id="addSymbolDialogForm" method="POST">
+    {% csrf_token %}
+    <input type="hidden" id="projectName" name="projectName" value="{{ projectName }}">
+    <input type="hidden" name="oldGroupName" id="addSymbolOldName" value="dummy" /> <br>
+    <input type="hidden" name="oldSymbolName" id="addSymbolOldName" value="dummy" /> <br>
+    Name <input type="text" name="newSymbolName" id="addSymbolNewName" value="" style="width:100%"/> <br>
+    Value <input type="text" name="value" id="addSymbolValue" value="" style="width:100%"/> <br>
+    Group <select name="newGroupName" id="addSymbolGroupSelect" size="1"></select> <br>
+    <input type="button" value="Add" onclick="submitDialogForm('addSymbolDialog', 'actionAdd')" />
+  </form>
+  <pre id="addSymbolDialogMsg"></pre>
+</dialog>
+
+<script>
+function addSymbolDialog() {
+  var symbolName = document.getElementById('symbolNameFilter').value;
+  document.getElementById('addSymbolNewName').value = symbolName;
+  var addr = document.getElementById('symbolAddrFilter').value;
+  document.getElementById('addSymbolValue').value = addr;
+  document.getElementById('addSymbolDialog').showModal()
+}
+function addSymbolupdateGroupOptions() {
+  updateGroupOptions("addSymbolGroupSelect", "global");
+}
+
+addUpdateCallback(addSymbolupdateGroupOptions);
+</script>
 
 <!-- Edit Symbol Dialog -->
 <dialog close id="editSymbolDialog">
@@ -538,15 +545,16 @@ addUpdateCallback(sanity_check);
 
 <h3>Symbols</h3>
 
+
 <table>
   <tr>
     <th colspan=2>Search</th>
     <th rowspan=4>
-      <input type="button" value="Add symbol" style="width:100%; height:30px;" onclick="document.getElementById('addSymbolDialog').showModal()">
+      <input type="button" value="Add symbol" style="width:100%; height:30px;" onclick="addSymbolDialog()">
     </th>
   </tr>
   <tr><td>Name </td><td>  <input type="text" id="symbolNameFilter" onkeyup="filter_symbols()"></input> </td></tr>
-  <tr><td>Addr </td><td> <input type="text" id="symbolAddFilterr" onkeyup="filter_symbols()"></input> </td></tr>
+  <tr><td>Addr </td><td> <input type="text" id="symbolAddrFilter" onkeyup="filter_symbols()"></input> </td></tr>
   <tr><td>Group</td><td> <input type="text" id="symbolGroupFilter" onkeyup="filter_symbols()"></input> </td></tr>
 </table>
 
@@ -586,7 +594,7 @@ function filter_symbols() {
 function filterSymboltable(symbolTable, groupName, symbols) {
   var symbolNameFilter = new RegExp(document.getElementById('symbolNameFilter').value, "gi");
   var groupNameFilter = new RegExp(document.getElementById('symbolGroupFilter').value, "gi");
-  var addrFilter = parseInt(document.getElementById('symbolAddFilterr').value);
+  var addrFilter = parseInt(document.getElementById('symbolAddrFilter').value);
 
   if (!groupName.match(groupNameFilter)) return symbolTable;
 

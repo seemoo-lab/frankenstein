@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 
-{% include 'project/newProject.html' %}
+Create Project
+
+<form action="newProject" method="POST">
+  {% csrf_token %}
+  <input type="text" name="projectName" maxlength="100" required id="id_projectName">
+  <input type="submit" value="Create">
+</form>
 
 {% endblock %}

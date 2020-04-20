@@ -38,6 +38,7 @@ class emu:
         self.read = set()
         self.write = set()
 
+        self.trace_initialized = False
         self.coverage_activity = {}
         self.read_activity = {}
         self.write_activity = {}
@@ -47,7 +48,10 @@ class emu:
 
         self.emulator_base_start = None
         self.emulator_base_stop = None
-        self.fw_entry = self.symbols[fw_entry_symbol] # ignore everything until that symbol
+        if fw_entry_symbol in self.symbols:
+            self.fw_entry = self.symbols[fw_entry_symbol] # ignore everything until that symbol
+        else:
+            self.fw_entry = None
 
         #loading prog headrs
         self.state = []
@@ -150,7 +154,9 @@ class emu:
 
     @staticmethod
     def hook_code(uc, address, size, self):
-        if address & 0xfffffffe == self.fw_entry & 0xfffffffe:
+        if self.fw_entry is not None and address & 0xfffffffe == self.fw_entry & 0xfffffffe:
+            self.trace_init_state()
+        if self.fw_entry is None and not self.trace_initialized:
             self.trace_init_state()
 
         if self.emulator_base_start is not None:
@@ -198,12 +204,17 @@ class emu:
     """
     def trace_init_state(self):
         self.state = []
+        self.trace_initialized = True
         for name, addr, size in self.segments:
             data = self.uc.mem_read(addr, size)
             #data = list(map(chr, data))
             self.state += [(addr, size, data)]
         
 
+    """
+    Called if a tracepoint is hit
+    Will save registers and analyzes changes made im memory
+    """
     def trace_state_change(self, reason):
         print(reason)
         new_state = []

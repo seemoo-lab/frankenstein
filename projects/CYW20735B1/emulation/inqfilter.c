@@ -5,14 +5,6 @@
 #include "queue.h"
 
 
-#include <sys/stat.h>
-#include <fcntl.h>
-
-
-void do_exit() {
-   exit(0); 
-}
-
 void _start() {
     patch_code();
     char bd_addr[6] = {0x41, 0x41, 0x41, 0x41, 0x41, 0x41};
@@ -25,5 +17,4 @@ void _start() {
     }
 
     exit(0);
-    
 }
