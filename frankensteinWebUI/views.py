@@ -381,7 +381,11 @@ def emulate(request):
         if form.is_valid():
             tracepoints = form.cleaned_data["tracepoints"]
             if len(tracepoints) > 2:
-                tracepoints = list(map(lambda x:int(x,16), tracepoints.split(",")))
+                for w in " \r\n\t":
+                    tracepoints = tracepoints.replace(w, ",")
+
+                tracepoints = filter(lambda x: len(x) > 0, tracepoints.split(","))
+                tracepoints = list(map(lambda x:int(x,16), tracepoints))
             else:
                 tracepoints = []
 

@@ -84,7 +84,7 @@ class emu:
 
 
         #stack
-        stack = 0xffff000
+        stack = 0xfffe000
         self.uc.mem_map(stack, stack+4096, UC_PROT_ALL)
         self.uc.reg_write(arm_const.UC_ARM_REG_SP, stack + 4096)
 
@@ -154,10 +154,32 @@ class emu:
 
     @staticmethod
     def hook_code(uc, address, size, self):
+        # Unicorn will for some reason giv old register values after a crash
+        # The last update seems to be on the entry of the bb
+        self.regs = {}
+        self.regs["r0"] = self.uc.reg_read(arm_const.UC_ARM_REG_R0)
+        self.regs["r1"] = self.uc.reg_read(arm_const.UC_ARM_REG_R1)
+        self.regs["r2"] = self.uc.reg_read(arm_const.UC_ARM_REG_R2)
+        self.regs["r3"] = self.uc.reg_read(arm_const.UC_ARM_REG_R3)
+        self.regs["r4"] = self.uc.reg_read(arm_const.UC_ARM_REG_R4)
+        self.regs["r5"] = self.uc.reg_read(arm_const.UC_ARM_REG_R5)
+        self.regs["r6"] = self.uc.reg_read(arm_const.UC_ARM_REG_R6)
+        self.regs["r7"] = self.uc.reg_read(arm_const.UC_ARM_REG_R7)
+        self.regs["r8"] = self.uc.reg_read(arm_const.UC_ARM_REG_R8)
+        self.regs["r9"] = self.uc.reg_read(arm_const.UC_ARM_REG_R9)
+        self.regs["r10"] = self.uc.reg_read(arm_const.UC_ARM_REG_R10)
+        self.regs["r11"] = self.uc.reg_read(arm_const.UC_ARM_REG_R11)
+        self.regs["r12"] = self.uc.reg_read(arm_const.UC_ARM_REG_R12)
+        self.regs["sp"] = self.uc.reg_read(arm_const.UC_ARM_REG_R13)
+        self.regs["lr"] = self.uc.reg_read(arm_const.UC_ARM_REG_R14)
+        self.regs["pc"] = self.uc.reg_read(arm_const.UC_ARM_REG_R15)
+
         if self.fw_entry is not None and address & 0xfffffffe == self.fw_entry & 0xfffffffe:
             self.trace_init_state()
         if self.fw_entry is None and not self.trace_initialized:
             self.trace_init_state()
+
+        print(hex(address))
 
         if self.emulator_base_start is not None:
             if address >= self.emulator_base_start and address < self.emulator_base_stop:
@@ -241,28 +263,11 @@ class emu:
 
         self.state = new_state
 
-        regs = {}
-        regs["r0"] = self.uc.reg_read(arm_const.UC_ARM_REG_R0)
-        regs["r1"] = self.uc.reg_read(arm_const.UC_ARM_REG_R1)
-        regs["r2"] = self.uc.reg_read(arm_const.UC_ARM_REG_R2)
-        regs["r3"] = self.uc.reg_read(arm_const.UC_ARM_REG_R3)
-        regs["r4"] = self.uc.reg_read(arm_const.UC_ARM_REG_R4)
-        regs["r5"] = self.uc.reg_read(arm_const.UC_ARM_REG_R5)
-        regs["r6"] = self.uc.reg_read(arm_const.UC_ARM_REG_R6)
-        regs["r7"] = self.uc.reg_read(arm_const.UC_ARM_REG_R7)
-        regs["r8"] = self.uc.reg_read(arm_const.UC_ARM_REG_R8)
-        regs["r9"] = self.uc.reg_read(arm_const.UC_ARM_REG_R9)
-        regs["r10"] = self.uc.reg_read(arm_const.UC_ARM_REG_R10)
-        regs["r11"] = self.uc.reg_read(arm_const.UC_ARM_REG_R11)
-        regs["r12"] = self.uc.reg_read(arm_const.UC_ARM_REG_R12)
-        regs["sp"] = self.uc.reg_read(arm_const.UC_ARM_REG_R13)
-        regs["lr"] = self.uc.reg_read(arm_const.UC_ARM_REG_R14)
-        regs["pc"] = self.uc.reg_read(arm_const.UC_ARM_REG_R15)
 
 
         tp = {}
         tp["reason"] = reason
-        tp["regs"] = regs
+        tp["regs"] = self.regs
         tp["memdiff"] = memdiff
         tp["memdif_rendered"] = memdif_rendered
         tp["stdout"] = self.stdout
@@ -273,7 +278,7 @@ class emu:
         self.stderr = ""
         self.result_id += 1
 
-        return [{"regs": regs, "memdiff": sorted(memdiff)}]
+        return [{"regs": self.regs, "memdiff": sorted(memdiff)}]
 
     def render_mem_diff(self, block_size=32):
         ret  = "----------" + ("-"*(3*block_size+1)) + "\n"
