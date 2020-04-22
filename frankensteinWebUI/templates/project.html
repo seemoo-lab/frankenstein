@@ -32,6 +32,19 @@ $("#editSymbolDialogForm").submit(function(e) {
 });
 
 /*
+Eventandler that will trigger the deault action on enter
+*/
+function formDefaultActionKeyHandler(e) {
+  if(e && e.keyCode == 13) {
+    e.preventDefault();
+    var p = document.getElementById(e.target.id).parentElement;
+    var elements = p.getElementsByClassName("defaultAction");
+    for (var i = 0; i < elements.length; i++)
+      elements[i].click();
+  }
+}
+
+/*
 Submits a form and displays the result (error) if not empty
 On succsess close dialog
 */
@@ -128,7 +141,7 @@ Thumb Mode: {{ project.cfg.general.thumb_mode }} </br>
     EMULATION_CODE_BASE <input type="text" name="emulationCodeBase" id="editConfigEmulationCodeBase" value="" style="width:100%"/> <br>
     PATCH_CFLAGS <input type="text" name="patchCFlags" id="editConfigPatchCFlags" value="" style="width:100%"/> <br>
     PATCH_CODE_BASE <input type="text" name="patchCodeBase" id="editConfigPatchCodeBase" value="" style="width:100%"/> <br>
-    <input type="button" value="Save" onclick="submitDialogForm('editConfigDialog', 'save')" />
+    <input class="defaultAction" type="button" value="Save" onclick="submitDialogForm('editConfigDialog', 'save')" />
   </form>
   <pre id="editConfigDialogMsg"></pre>
 </dialog>
@@ -141,7 +154,9 @@ Thumb Mode: {{ project.cfg.general.thumb_mode }} </br>
     document.getElementById("editConfigPatchCFlags").value = project.config["PATCH_CFLAGS"];
     document.getElementById("editConfigPatchCodeBase").value = "0x"+project.config["PATCH_CODE_BASE"].toString(16);
   }
+
   addUpdateCallback(editConfigUpdate);
+  document.getElementById("editConfigDialogForm").addEventListener("keyup", formDefaultActionKeyHandler);
 </script>
 
 <!-- Load Binary Dialog -->
@@ -154,17 +169,18 @@ Thumb Mode: {{ project.cfg.general.thumb_mode }} </br>
     {{ loadSegmentForm.segment.help_text }} {{ loadSegmentForm.segment }} </br>
     {{ loadSegmentForm.addr.help_text }} {{ loadSegmentForm.addr }} </br>
     Group <select name="groupName" id="loadSegmentGroupSelect" size="1"></select> <br>
-    <input type="button" value="Load" onclick="submitDialogForm('loadSegmentDialog', 'load')" />
+    <input class="defaultAction" type="button" value="Load" onclick="submitDialogForm('loadSegmentDialog', 'load')" />
   </form>
   <pre id="loadSegmentDialogMsg"></pre>
 </dialog>
 
 <script>
-function loadSegmentUpdateGroupOptions() {
-  updateGroupOptions("loadSegmentGroupSelect", "");
-}
+  function loadSegmentUpdateGroupOptions() {
+    updateGroupOptions("loadSegmentGroupSelect", "");
+  }
 
-addUpdateCallback(loadSegmentUpdateGroupOptions);
+  addUpdateCallback(loadSegmentUpdateGroupOptions);
+  document.getElementById("loadSegmentDialogForm").addEventListener("keyup", formDefaultActionKeyHandler);
 </script>
 
 
@@ -181,16 +197,17 @@ addUpdateCallback(loadSegmentUpdateGroupOptions);
     {{ loadELFForm.loadSymbols.help_text }} {{ loadELFForm.loadSymbols }} <br>
     {{ loadELFForm.loadSegments.help_text }} {{ loadELFForm.loadSegments }} <br>
     Group <select name="groupName" id="loadELFGroupSelect" size="1"></select> <br>
-    <input type="button" value="Load" onclick="submitDialogForm('loadELFDialog', 'load')" />
+    <input class="defaultAction" type="button" value="Load" onclick="submitDialogForm('loadELFDialog', 'load')" />
   </form>
   <pre id="loadELFDialogMsg"></pre>
 </dialog>
 <script>
-function loadELFUpdateGroupOptions() {
-  updateGroupOptions("loadELFGroupSelect", "Create New", "global");
-}
+  function loadELFUpdateGroupOptions() {
+    updateGroupOptions("loadELFGroupSelect", "Create New", "global");
+  }
 
-addUpdateCallback(loadELFUpdateGroupOptions);
+  addUpdateCallback(loadELFUpdateGroupOptions);
+  document.getElementById("loadELFDialogForm").addEventListener("keyup", formDefaultActionKeyHandler);
 </script>
 
 <!--{% include 'project/loadIdb.html' %} -->
@@ -216,7 +233,7 @@ addUpdateCallback(loadELFUpdateGroupOptions);
     Name <input type="text" name="newGroupName" id="editGroupNewGroupName" value="" style="width:100%" /> <br>
     Active <input type="checkbox" name="active" id=editGroupActive> <br>
 
-    <input type="button" value="Update" onclick="submitDialogForm('editGroupDialog', 'actionUpdate')" />
+    <input class="defaultAction" type="button" value="Update" onclick="submitDialogForm('editGroupDialog', 'actionUpdate')" />
     <input type="button" value="Delete" onclick="submitDialogForm('editGroupDialog', 'actionDelete')" />
   </form>
   <pre id="editGroupDialogMsg"></pre>
@@ -234,6 +251,7 @@ addUpdateCallback(loadELFUpdateGroupOptions);
     document.getElementById("editGroupDialogMsg").innerHTML = "";
     document.getElementById("editGroupDialog").showModal();
   }
+  document.getElementById("editGroupDialogForm").addEventListener("keyup", formDefaultActionKeyHandler);
 </script>
 
 
@@ -250,7 +268,7 @@ addUpdateCallback(loadELFUpdateGroupOptions);
     Group <select name="newGroupName" id="editSegmentNewGroupSelect" size="1"></select> <br>
     Active <input type="checkbox" name="active" id=editSegmentActive> <br>
 
-    <input type="button" value="Update" onclick="submitDialogForm('editSegmentDialog', 'actionUpdate')" />
+    <input class="defaultAction" type="button" value="Update" onclick="submitDialogForm('editSegmentDialog', 'actionUpdate')" />
     <input type="button" value="Delete" onclick="submitDialogForm('editSegmentDialog', 'actionDelete')" />
   </form>
   <pre id="editSegmentDialogMsg"></pre>
@@ -272,6 +290,7 @@ addUpdateCallback(loadELFUpdateGroupOptions);
     document.getElementById("editSegmentDialogMsg").innerHTML = "";
     document.getElementById("editSegmentDialog").showModal();
   }
+  document.getElementById("editSegmentDialogForm").addEventListener("keyup", formDefaultActionKeyHandler);
 </script>
 
 <!-- Add Symbol Dialog -->
@@ -285,7 +304,7 @@ addUpdateCallback(loadELFUpdateGroupOptions);
     Name <input type="text" name="newSymbolName" id="addSymbolNewName" value="" style="width:100%"/> <br>
     Value <input type="text" name="value" id="addSymbolValue" value="" style="width:100%"/> <br>
     Group <select name="newGroupName" id="addSymbolGroupSelect" size="1"></select> <br>
-    <input type="button" value="Add" onclick="submitDialogForm('addSymbolDialog', 'actionAdd')" />
+    <input class="defaultAction" type="button" value="Add" onclick="submitDialogForm('addSymbolDialog', 'actionAdd')" />
   </form>
   <pre id="addSymbolDialogMsg"></pre>
 </dialog>
@@ -302,6 +321,7 @@ function addSymbolupdateGroupOptions() {
   updateGroupOptions("addSymbolGroupSelect", "global");
 }
 
+document.getElementById("addSymbolDialogForm").addEventListener("keyup", formDefaultActionKeyHandler);
 addUpdateCallback(addSymbolupdateGroupOptions);
 </script>
 
@@ -317,7 +337,7 @@ addUpdateCallback(addSymbolupdateGroupOptions);
     Value <input type="text" name="value" id="editSymbolValue" value="" style="width:100%"/> <br>
     Group <select name="newGroupName" id="editSymbolNewGroupSelect" size="1"></select> <br>
 
-    <input type="button" value="Update" onclick="submitDialogForm('editSymbolDialog', 'actionUpdate')" />
+    <input class="defaultAction" type="button" value="Update" onclick="submitDialogForm('editSymbolDialog', 'actionUpdate')" />
     <input type="button" value="Delete" onclick="submitDialogForm('editSymbolDialog', 'actionDelete')" />
   </form>
   <pre id="editSymbolDialogMsg"></pre>
@@ -337,6 +357,7 @@ addUpdateCallback(addSymbolupdateGroupOptions);
     document.getElementById("editSymbolDialogMsg").innerHTML = "";
     document.getElementById("editSymbolDialog").showModal();
   }
+  document.getElementById("editSymbolDialogForm").addEventListener("keyup", formDefaultActionKeyHandler);
 </script>
 
 

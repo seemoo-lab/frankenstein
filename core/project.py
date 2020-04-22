@@ -3,7 +3,6 @@ import os
 from elftools.elf import elffile
 import shutil
 from distutils.spawn import find_executable
-#import idb
 import inspect
 
 
@@ -170,36 +169,37 @@ class Project:
                         self.add_symbol(group, name, value)
             self.save()
 
-    #def load_idb(self, fname, load_segments=True, load_functions=True):
-    #    with idb.from_file(fname) as db:
-    #        api = idb.IDAPython(db)
+    def load_idb(self, fname, load_segments=False, load_functions=True):
+        import idb
+        with idb.from_file(fname) as db:
+            api = idb.IDAPython(db)
 
-    #        #load segments
-    #        if load_segments:
-    #            for addr in api.idautils.Segments():
-    #                try:
-    #                    end = api.idaapi.get_segm_end(addr)
-    #                    size = end-addr
-    #                    data = api.ida_bytes.get_bytes(addr, size) #seems to fail sometimes
-    #                    name = api.idaapi.get_segm_name(addr)
-    #                    name = "%s_%s_0x%x" % (os.path.basename(fname), name, addr)
-    #                    print(name)
-    #                    self.add_segment(group, name, addr, data)
-    #                except:
-    #                    import traceback; traceback.print_exc()
+            #load segments
+            if load_segments:
+                for addr in api.idautils.Segments():
+                    try:
+                        end = api.idaapi.get_segm_end(addr)
+                        size = end-addr
+                        data = api.ida_bytes.get_bytes(addr, size) #seems to fail sometimes
+                        name = api.idaapi.get_segm_name(addr)
+                        name = "%s_%s_0x%x" % (os.path.basename(fname), name, addr)
+                        print(name)
+                        self.add_segment(group, name, addr, data)
+                    except:
+                        import traceback; traceback.print_exc()
 
-    #        #extract function names
-    #        if load_functions:
-    #            for addr in api.idautils.Functions():
-    #                name = api.idc.GetFunctionName(addr)
-    #                if self.cfg["config"]["thumb_mode"]:
-    #                    addr |= 1
+            #extract function names
+            if load_functions:
+                for addr in api.idautils.Functions():
+                    name = api.idc.GetFunctionName(addr)
+                    if self.cfg["config"]["thumb_mode"]:
+                        addr |= 1
 
-    #                self.add_symbol(name, addr)
+                    self.add_symbol("global", name, addr)
 
-    #        #vs vstruct
+            #vs vstruct
 
-    #    self.save()
+        self.save()
 
     """
     Config manipulation
@@ -750,7 +750,7 @@ class Project:
 if __name__ == "__main__":
     import sys
     p = Project(sys.argv[1])
-    print(p.symbolize(int(sys.argv[2],16)))
+    #print(p.symbolize(int(sys.argv[2],16)))
     #p.load_symbol_csv(sys.argv[2], "global")
     #name = "Nexus 5 Bluetooth"
     #os.system("rm -rf /tmp/test_project")
@@ -758,8 +758,8 @@ if __name__ == "__main__":
     #p = Project("/tmp/test_project")
     ##p.load_elf("../gen/mempatch", load_symbols=False)
     ##p.load_elf("../src/breakpoint", load_segments=False)
-    #p.load_idb("../../../firmware/dumps/nexus5/memdump_file_transfer_ida7.idb")
-    #p.save()
+    p.load_idb(sys.argv[2])
+    p.save()
 
     #p.create_build_scripts()
 

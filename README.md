@@ -29,7 +29,7 @@ Table of Contents
     * [EIR RCE Exploit (CVE-2019-11516)](doc/CVE_2019_11516.md)
     * [LE Heap Overflow  (CVE-2019-13916)](doc/CVE_2019_13916.md)
     * [Device to Host and Host to Device Buffer Misconfiguration (CVE-2019-18614)](doc/CVE_2019_18614.md)
-    * BlueFrag (CVE-2020-0022) - To be disclosed, fixed in the Android February 2020 release. Look at our ACL [fuzzer](projects/CYW20735B1/patch/aclfuzz.c).
+    * [BlueFrag (CVE-2020-0022)](https://insinuator.net/2020/04/cve-2020-0022-an-android-8-0-9-0-bluetooth-zero-click-rce-bluefrag/) - Fixed in the Android February 2020 release. Look at our ACL [fuzzer](projects/CYW20735B1/patch/aclfuzz.c).
 
   * Miscellaneous
     * [Project Structure](doc/projects.md)
@@ -121,7 +121,7 @@ with some of these even returning mal-formatted names.
 Reproducing CVEs
 ----------------
 
-To trigger [CVE-2019-11516](doc/CVE_2019_11516), run `hcitool -i hci1 scan` and wait a couple of seconds to minutes.
+To trigger [CVE-2019-11516](doc/CVE_2019_11516.md), run `hcitool -i hci1 scan` and wait a couple of seconds to minutes.
 
     Context switch idle -> lm
     lr=0x02d12f lm_handleInqFHS(0x40)lr=0x02cc53 lc_handleInqResult(0x21fb1c)lr=0x041d91 inqfilter_isBdAddrRegistered(0x21fb24, 0x0);
@@ -145,7 +145,7 @@ To trigger [CVE-2019-11516](doc/CVE_2019_11516), run `hcitool -i hci1 scan` and 
 For debugging purposes, our heap sanitizer is currently writing `0x42` to released memory.
  
 
-Now let's trigger [CVE-2019-13916](doc/CVE_2019_13916). As this vulnerability is within parsing of BLE PDUs,
+Now let's trigger [CVE-2019-13916](doc/CVE_2019_13916.md). As this vulnerability is within parsing of BLE PDUs,
 all you need to do is to successfully establish a connection to another LE device. If you
 connect to random addresses, this will succeed at some point in time. Usually, this takes 
 a couple of minutes and in some cases the emulator crashes instead and you need to restart
