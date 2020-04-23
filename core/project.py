@@ -153,7 +153,7 @@ class Project:
                     size = segment.header.p_memsz
                     data = segment.data()
                     name = "Segment_0x%x" % (vaddr)
-                    if not self.add_segment(group, name, vaddr, data):
+                    if not self.add_segment(group, name, vaddr, data, size):
                         self.error("Failed to add segment %s" % name)
                         return False
 
@@ -184,7 +184,7 @@ class Project:
                         name = api.idaapi.get_segm_name(addr)
                         name = "%s_%s_0x%x" % (os.path.basename(fname), name, addr)
                         print(name)
-                        self.add_segment(group, name, addr, data)
+                        self.add_segment(group, name, addr, data, size)
                     except:
                         import traceback; traceback.print_exc()
 
@@ -335,11 +335,17 @@ class Project:
     """
     Segment manipulation
     """
-    def add_segment(self, group, name, addr, data):
+    def add_segment(self, group, name, addr, data, size=0):
         if name == "":
             name = "Segment_0x%x" % addr
         else:
             name = os.path.basename(name)
+
+        if size % 8 != 0:
+            size += 8-(size % 8)
+
+        if size > 0 and len(data) < size:
+            data += b"\0" * (size - len(data))
 
         if len(data) == 0:
             self.error("Empty segment %s" % name)
@@ -524,10 +530,22 @@ class Project:
 
         return True
 
+    def get_symbols(self):
+        symbols = {}
+        for name, addr in self.cfg["symbols"].items():
+            symbols[name] = addr
+
+        for segment_group in self.cfg["segment_groups"]:
+            if self.cfg["segment_groups"][segment_group]["active"]:
+                for name, addr in self.cfg["segment_groups"][segment_group]["symbols"].items():
+                    symbols[name] = addr
+
+        return symbols
+
     def symbolize(self, addr):
         next_symbol = str(addr)
         next_addr = 0
-        for name, x in self.cfg["symbols"].items():
+        for name, x in self.get_symbols().items():
             if addr == x:
                 return name
 

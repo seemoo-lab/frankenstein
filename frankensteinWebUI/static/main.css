@@ -1,10 +1,10 @@
-textarea, body,input,button,dialog {
+textarea,body,input,button,dialog {
     background-color: #040404;
     color: #d08000;
     font-family: monaco, monospace;
 }
 
-textarea, input,button,dialog {
+textarea,input,button,dialog {
     border: 1px solid #d08000;
     background:#101010
 }

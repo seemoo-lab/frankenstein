@@ -22,9 +22,9 @@
 </form>
 
 <script>
-  function download_drcov() {
-    var drcov = atob('{{ drcov_b64 }}');
-    download("testcase.drcov", drcov);
+  function download_tracefile() {
+    var tracefile = atob('{{ tracefile_b64 }}');
+    download("testcase.trace", tracefile);
   }
 </script>
 
@@ -42,7 +42,7 @@
     for (var b = 0; b < splitted.length; b += 1) {
       var block = splitted[b];
 
-      vMaMa>ar chars = "";
+      chars = "";
       for (var i = 0; i < block.length; i += 2) {
         var hexchar = block.substr(i, 2);
         chars +=  block.substr(i, 2);
@@ -56,14 +56,14 @@
     document.getElementById("stdin").value = lines.join("\n");
   }
 
-  set_stdin("{{ emulateForm.cleaned_data.stdin }}");
+  set_stdin(`{{ emulateForm.cleaned_data.stdin }}`);
 </script>
 
 
 {% if success %}
   <br>
   <hr>
-  <button onclick="download_drcov()">Download Code Coverage</button> </br>
+  <button onclick="download_tracefile()">Download Code Coverage</button> </br>
   <br>
 {% endif %}
 
@@ -158,10 +158,10 @@
   var coverage_activity = {{ emulator.coverage_activity_json|safe }};
   var read_activity = {{ emulator.read_activity_json|safe }};
   var write_activity = {{ emulator.write_activity_json|safe }};
-  var symbol_lookup = create_reverse_symbol_lookup( {{ symbols_json|safe }} );
+  var symbol_table  = create_reverse_symbol_lookup( {{ symbols_json|safe }} );
 
   {% for name, addr, size in emulator.segments %}
-      activityMap("ActivityContainer", "{{ name }}", coverage_activity, read_activity, write_activity, {{ addr }}, {{ addr | add:size }}, symbol_lookup);
+      activityMap("ActivityContainer", "{{ name }}", coverage_activity, read_activity, write_activity, {{ addr }}, {{ addr | add:size }}, symbol_table);
   {% endfor %}
 </script>
 

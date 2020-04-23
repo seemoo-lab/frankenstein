@@ -18,10 +18,16 @@ project = json.load(project_fd)
 
 elf = lief.parse(sys.argv[2])
 
-for name in project["symbols"].keys():
+for name in project["symbols"]:
     symbol = elf.get_symbol(name)
     symbol.type = lief.ELF.SYMBOL_TYPES.FUNC
     symbol.exported = True
+
+for sg in project["segment_groups"]:
+    for name in project["segment_groups"][sg]["symbols"]:
+        symbol = elf.get_symbol(name)
+        symbol.type = lief.ELF.SYMBOL_TYPES.FUNC
+        symbol.exported = True
 
 elf.write(sys.argv[2]+".patched")
 del elf

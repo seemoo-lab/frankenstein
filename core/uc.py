@@ -1,4 +1,5 @@
 import sys
+import os
 from elftools.elf import elffile
 from elftools.elf.constants import SH_FLAGS
 from unicorn import *
@@ -60,7 +61,7 @@ class emu:
             section = self.elf.get_section(i)
             if section.header["sh_flags"] & SH_FLAGS.SHF_ALLOC != 0:
                 addr = section.header["sh_addr"]
-                size = self.pagreesize(section.header["sh_size"])
+                size = section.header["sh_size"]
                 name = section.name
 
                 #NOBITS sections contains no data in file
@@ -70,23 +71,52 @@ class emu:
                 else:
                     data = section.data()
 
-                print("Loading %s @ 0x%x - 0x%x (%d bytes)" % (name, addr, addr+len(data), len(data)))
-                self.uc.mem_map(addr, size, UC_PROT_ALL)
-                self.uc.mem_write(addr, data)
+                print("Found %s @ 0x%x - 0x%x (%d bytes)" % (name, addr, addr+len(data), len(data)))
                 if emulator_base == addr:
                     self.emulator_base_start = emulator_base
                     self.emulator_base_stop = emulator_base + size
-                else:
-                    self.segments += [(name, addr, size)]
+
+                self.segments += [(name, addr, size)]
                 self.state += [(addr, size, data)]
 
-            self.segments = sorted(self.segments, key=lambda x:x[0])
 
+
+        #compute memory map from sections
+        self.maps = []
+        if self.emulator_base_start is not None:
+            self.maps += [(self.emulator_base_start, self.emulator_base_stop)]
+        self.segments = sorted(self.segments, key=lambda x:x[0])
+        for name, addr, size in self.segments:
+            size += addr & 0x3ff
+            addr = addr & (~0x3ff)
+            altered = False
+            for i in range(len(self.maps)):
+                map_addr, map_size = self.maps[i]
+                offset = addr - map_addr
+                if addr >= map_addr and addr <= map_addr + map_size:
+                    self.maps[i] = (map_addr, self.pageresize(max(map_size, offset+size)))
+                    altered = True
+
+            if not altered:
+                self.maps += [(addr, self.pageresize(size))]
+
+
+        for addr, size in self.maps:
+            print("Mapping 0x%x - 0x%x (%d bytes)" % (addr, addr+size, size))
+            self.uc.mem_map(addr, size, UC_PROT_ALL)
+
+
+            
+        for addr,size,data in self.state:
+            print("Loading 0x%x - 0x%x (%d bytes)" % (addr, addr+len(data), len(data)))
+            self.uc.mem_write(addr, data)
 
         #stack
-        stack = 0xfffe000
-        self.uc.mem_map(stack, stack+4096, UC_PROT_ALL)
-        self.uc.reg_write(arm_const.UC_ARM_REG_SP, stack + 4096)
+        stack = 0xdead0000
+        stack_size = 16384
+        print("Mapping Stack 0x%x - 0x%x (%d bytes)" % (stack, stack+stack_size, stack_size))
+        self.uc.mem_map(stack, stack_size, UC_PROT_ALL)
+        self.uc.reg_write(arm_const.UC_ARM_REG_SP, stack + stack_size)
 
         #syscalls
         self.uc.hook_add(UC_HOOK_INTR, self.hook_intr, self)
@@ -101,7 +131,7 @@ class emu:
         if drcov:
             self.uc.hook_add(UC_HOOK_BLOCK, self.hook_bb, self)
 
-    def pagreesize(self, s, pagesize=1024):
+    def pageresize(self, s, pagesize=1024):
         if s % pagesize == 0:
             return s
         return (int(s / pagesize) + 1) * pagesize
@@ -134,11 +164,12 @@ class emu:
 
                     data = uc.mem_read(target, size)
                     if fd == 1:
-                        self.stdout += data
+                        self.stdout += data.decode("utf-8")
+                        sys.stdout.write(data.decode("utf-8"))
                     else:
                         self.stderr += data.decode("utf-8")
                         sys.stderr.write(data.decode("utf-8"))
-                    #sys.stdout.write(str(data))
+
                 else:
                     print("unknown intr")
 
@@ -150,6 +181,7 @@ class emu:
         if self.emulator_base_start is not None:
             if address >= self.emulator_base_start and address < self.emulator_base_stop:
                 return
+        #print(hex(address))
         self.coverage_bb.add((address, size))
 
     @staticmethod
@@ -178,8 +210,6 @@ class emu:
             self.trace_init_state()
         if self.fw_entry is None and not self.trace_initialized:
             self.trace_init_state()
-
-        print(hex(address))
 
         if self.emulator_base_start is not None:
             if address >= self.emulator_base_start and address < self.emulator_base_stop:
@@ -288,7 +318,7 @@ class emu:
             new_data = self.uc.mem_read(addr, size)
             #new_data = list(map(chr, new_data))
             current_offset = 0
-            print(len(data), len(new_data), size)
+            #print(len(data), len(new_data), size)
 
             #for each hexdump row
             while current_offset <  size:
@@ -305,7 +335,7 @@ class emu:
                     symbols = ""
 
                     #render diff
-                    for i in range(block_size):
+                    for i in range(min(block_size, len(new_row))):
                         if new_row[i] == old_row[i]:
                             hex_new += "%02x " % new_row[i]
                             hex_old += "   "
@@ -374,6 +404,7 @@ class emu:
             self.trace_state_change(str(e))
 
 
+    # Seems to be broken n lighthouse
     def get_drcov(self):
         drcov = b"DRCOV VERSION: 2\nDRCOV FLAVOR: drcov\n"
 
@@ -381,21 +412,24 @@ class emu:
         drcov += b"Columns: id, base, end, entry, path\n"
         for i in range(len(self.state)):
             addr, size, _ = self.state[i]
-            drcov += b"%d, 0x%x, 0x%x, 0x%x, %s\n" % (i, addr, addr+size+1, addr, b"execute.exe")
+            drcov += b"%d, 0x%x, 0x%x, 0x%x, %s\n" % (i, addr, addr+size+1, addr, os.path.basename(self.fname).encode())
 
         drcov += b"BB Table: %d bbs\n" % len(self.coverage_bb)
+        bb_table = b""
         for address, size in self.coverage_bb:
             for module_id in range(len(self.state)):
                 base_addr, module_size, _ = self.state[module_id]
                 if address >= base_addr and address <= base_addr + module_size:
+                    bb_table += struct.pack("<Ihh", address - base_addr, size, module_id)
                     break
 
-            drcov += struct.pack("<I", address - base_addr)
-            drcov += struct.pack("<h", size)
-            drcov += struct.pack("<h", module_id)
+        return drcov + bb_table
 
-        return drcov
-
+    def get_tracefile(self):
+        trace = ""
+        for address in self.coverage_pc:
+            trace += "0x%x\n" % address
+        return trace.encode()
 
 
 

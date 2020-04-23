@@ -1,3 +1,6 @@
+#ifndef FRANKENSTEIN_LGCC_H
+#define FRANKENSTEIN_LGCC_H
+
 /*
  * __udivmodsi4.c
  *
@@ -88,3 +91,5 @@ unsigned int __aeabi_uidiv(unsigned int num, unsigned int den)
 {
     return __udivmodsi4(num, den, 0);
 }
+
+#endif

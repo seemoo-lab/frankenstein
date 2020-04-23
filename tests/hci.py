@@ -67,4 +67,4 @@ def hci_test(cmd):
         except:
             break
 
-hci_test("qemu-arm projects/"+sys.argv[1]+"/gen/hci_test.exe")
+hci_test("qemu-arm projects/"+sys.argv[1]+"/gen/hci_test.exe 2>/dev/null")

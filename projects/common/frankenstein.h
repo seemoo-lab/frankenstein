@@ -3,5 +3,6 @@
 
 #include <frankenstein/utils.h>
 #include <frankenstein/hook.h>
+#include <frankenstein/lgcc.h>
 
 #endif

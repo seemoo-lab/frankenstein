@@ -391,7 +391,8 @@ def emulate(request):
 
             try:
                 stdin = form.cleaned_data["stdin"]
-                stdin = stdin.replace(" ", "").replace("\n", "");
+                stdin = stdin.replace(" ", "").replace("\n", "").replace("\r", "")
+                print(stdin)
                 stdin = unhexlify(stdin)
             except:
                 import traceback; traceback.print_exc()
@@ -416,15 +417,18 @@ def emulate(request):
             emulator.read_activity_json = json.dumps(emulator.read_activity)
             emulator.write_activity_json = json.dumps(emulator.write_activity)
 
+
             #context["segments"] = sorted(project.cfg["segments"].items(), key=lambda x: x[1]["addr"])
-            context["symbols_json"] = json.dumps(project.cfg["symbols"])
+            context["symbols_json"] = json.dumps(project.get_symbols())
             context["emulator"] = emulator
-            context["drcov_b64"] = base64.b64encode(emulator.get_drcov())
+            context["tracefile_b64"] = base64.b64encode(emulator.get_tracefile()).decode()
             context["project"] = project
             context["success"] = True
 
+
     else:
         form = emulateForm()
+
 
     context["emulateForm"] = form
     context["projectName"] = projectName
