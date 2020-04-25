@@ -253,5 +253,5 @@ The following Python 3 packets are required:
     
 Tested with `django-1.11.24`.
 
-We thankAnna Stichling for creating the *Frankenstein* logo.
+We thank Anna Stichling for creating the *Frankenstein* logo.
 
