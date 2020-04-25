@@ -12,6 +12,8 @@ The port to the *CYW20819* evaluation board is required due to [CVE-2019-18614](
 which prevents further fuzzing of connection states such as music streaming or tethering.
 We are working on support for the *Samsung Galaxy S10/S20*—all of the European *S10e/S10/S10+/Note 10/S20* models
 feature the same chip.
+If you already have symbols for one chip but are missing symbols for a chip that had similar compiler options,
+you might find using [Polypyus](https://github.com/seemoo-lab/polypyus) before running BinDiff helpful.
 
 
 Table of Contents
@@ -251,5 +253,5 @@ The following Python 3 packets are required:
     
 Tested with `django-1.11.24`.
 
-
+We thankAnna Stichling for creating the *Frankenstein* logo.
 
