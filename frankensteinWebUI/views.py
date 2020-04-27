@@ -80,6 +80,9 @@ def render_wrapper(request, template, context={}):
         emulators = glob.glob(getProjectPath(projectName)+"/gen/*.exe")
         context["projects"][projectName] = map(os.path.basename, emulators)
 
+    if "title" not in context:
+        context["title"] = "Frankenstein"
+
     return render(request, template, context)
 
 """
@@ -106,6 +109,7 @@ def project(request):
     patches = map(os.path.basename, patches)
 
     context = {
+        "title": projectName,
         "projectName": projectName,
         "project": project,
         "patches": patches,
@@ -375,6 +379,7 @@ def emulate(request):
         return redirect("/")
 
     projectPath = getProjectPath(projectName)
+    context["title"] = "%s/%s Emulate" % (request.GET["projectName"], request.GET["emulatorName"])
 
     if request.method == 'POST':
         form = emulateForm(request.POST)

@@ -5,7 +5,9 @@
 <script src="/static/xterm.min.js"></script>
 <script src="/static/jquery-3.4.1.min.js"></script>
 
-
+{% if title != "" %}
+<title>{{ title }}</title>
+{% endif %}
 
 
 <script>

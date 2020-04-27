@@ -49,20 +49,21 @@ void xmit_memory_emu(char *fname) {
 }
 
 
-//asm("saved_regs_emu:\n"
-//    ".word 0xdeadbeef\n");
-
-void xmit_state_emu(char *fname){
-    //save registers
-    asm("push {r0-r12,lr}\n"
-    "mov r1, #0\n"
+// Requires Stack to be in the elf file
+// Fix would be void _start(){ asm("ldr sp, =stack_end"); main(); }
+int saved_regs_emu;
+void xmit_state_emu(char *fname);
+asm("xmit_state_emu:"
+    "push {r0-r12,lr}\n"
+    "ldr r1, =saved_regs_emu\n"
     "str sp, [r1]\n"
 
     "bl xmit_memory_emu\n"
 
-    "mov r1, #0\n"
+    "ldr r1, =saved_regs_emu\n"
     "ldr sp, [r1]\n"
-    "pop {r0-r12,lr}\n");
-}
+    "pop {r0-r12,lr}\n"
+    "bx lr\n"
+    ".LTORG\n");
 
 #endif

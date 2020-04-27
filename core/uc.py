@@ -8,6 +8,7 @@ from binascii import hexlify, unhexlify
 import struct
 from subprocess import Popen, PIPE, STDOUT
 from random import getrandbits
+import capstone
 import re
 import json
 
@@ -293,11 +294,21 @@ class emu:
 
         self.state = new_state
 
+        # disassemble current instruction
+        try:
+            pc = self.regs["pc"]
+            md = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB)
+            instr = list(md.disasm(self.uc.mem_read(pc, 4), pc))[0]
+            instr = instr.mnemonic + "   " + instr.op_str
+        except:
+            import traceback; traceback.print_exc()
+            instr = "??"
 
-
+        # Save tracepoint object
         tp = {}
         tp["reason"] = reason
         tp["regs"] = self.regs
+        tp["instr"] = instr
         tp["memdiff"] = memdiff
         tp["memdif_rendered"] = memdif_rendered
         tp["stdout"] = self.stdout

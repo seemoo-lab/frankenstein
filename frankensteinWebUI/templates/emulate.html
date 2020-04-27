@@ -51,9 +51,15 @@
       }
 
       lines.push(chars);
-
     }
-    document.getElementById("stdin").value = lines.join("\n");
+    lines = lines.join("\n").trimEnd();
+
+    var selectionStart = document.getElementById("stdin").selectionStart;
+    var selectionEnd = document.getElementById("stdin").selectionEnd;
+    var offset = lines.length - document.getElementById("stdin").value.length;
+    document.getElementById("stdin").value = lines;
+    document.getElementById("stdin").selectionStart = selectionStart + offset;
+    document.getElementById("stdin").selectionEnd = selectionEnd + offset;
   }
 
   set_stdin(`{{ emulateForm.cleaned_data.stdin }}`);
@@ -87,7 +93,7 @@
     {% endif %}
 
 </br>
-  <h3> {{ t.pc_symbolized }} - {{ t.reason }}</h3>
+  <h3> {{ t.pc_symbolized }} - {{ t.instr }} - {{ t.reason }}</h3>
 </br>
     <!-- registers -->
     <table style="width:100%">

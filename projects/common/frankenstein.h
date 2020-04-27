@@ -5,4 +5,9 @@
 #include <frankenstein/hook.h>
 #include <frankenstein/lgcc.h>
 
+#ifdef FRANKENSTEIN_EMULATION
+//#include <frankenstein/xmit_state_emu.h>
+#endif
+
+
 #endif
