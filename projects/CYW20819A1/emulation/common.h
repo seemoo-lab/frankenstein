@@ -151,9 +151,9 @@ void patch_code() {
     idle_loop = clean_exit;
 
     //Watchdog HW Reset
-    patch_jump(&wdog_generate_hw_reset, &die);
+    patch_jump(wdog_generate_hw_reset, &die);
     //Enable Peripheral UART
-    patch_jump(&puart_write, &puart_write_hook);
+    patch_jump(puart_write, &puart_write_hook);
     //Trace dbfw Assert Fatals
     trace(dbfw_assert_fatal, 1, false);
 

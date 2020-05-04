@@ -12,15 +12,28 @@ In emulation, we can directly write to code
 #endif
 
 /*
+This is used to get the address of a symbol (e.g. function)
+without the need of declaring it first in C
+*/
+#define get_symbol_address(func, addr) {                    \
+    asm("ldr %0, ="#func"\n"                                \
+        "b get_symbol_address_ltorg_end_%=\n"               \
+        ".LTORG\n"                                          \
+        "get_symbol_address_ltorg_end_%=:": "=r" (addr));   \
+}
+
+/*
 patch code with "bx lr"
 */
-#define patch_return(x) {                                   \
-    if (~(uint32_t)(x) & 0x2) { /* aligned */               \
-        write_code( ((uint32_t)(x)&~3)  ,                   \
-        0x00004770 | (((uint32_t)(x))&~1) &0xffff0000);     \
+#define patch_return(func) {                                \
+    uint32_t func_ptr;                                      \
+    get_symbol_address(func, func_ptr);                     \
+    if (~func_ptr & 0x2) { /* aligned */                    \
+        write_code( (func_ptr&~3) ,                         \
+        0x00004770 | ((func_ptr&~1) & 0xffff0000));         \
     } else { /* misaligned jump */                          \
-        write_code( ((uint32_t)(x)&~3)  ,                   \
-        0x47700000 | (((uint32_t)(x))&~1) &0x0000ffff);     \
+        write_code( (func_ptr&~3)  ,                        \
+        0x47700000 | ((func_ptr&~1) & 0x0000ffff));         \
     }                                                       \
 }
 
@@ -29,16 +42,18 @@ installs a jump at a given address using "ldr pc, [pc]"
 for not aligned addresses a nop is inserted to align the code
 */
 
-#define patch_jump(x, func) {                               \
-    if (~(uint32_t)(x) & 0x2) { /* aligned jump */          \
-        write_code( ((uint32_t)(x)&~3)  , 0xf000f8df);      \
-        write_code( ((uint32_t)(x)&~3)+4, func);            \
+#define patch_jump(src, dest) {                             \
+    uint32_t src_ptr;                                       \
+    get_symbol_address(src, src_ptr)                        \
+    if (~src_ptr & 0x2) { /* aligned jump */                \
+        write_code( (src_ptr&~3)  , 0xf000f8df);            \
+        write_code( (src_ptr&~3)+4, dest);                  \
     } else { /* misaligned jump */                          \
-        uint32_t align = *(uint32_t*)((uint32_t)(x)&~3);    \
+        uint32_t align = *(uint32_t*)(src_ptr&~3);          \
         align = (align & 0x0000ffff) | (0xbf00<<16);        \
-        write_code( ((uint32_t)(x)&~3)  , align);           \
-        write_code( ((uint32_t)(x)&~3)+4, 0xf000f8df);      \
-        write_code( ((uint32_t)(x)&~3)+8, func);            \
+        write_code( (src_ptr&~3)  , align);                 \
+        write_code( (src_ptr&~3)+4, 0xf000f8df);            \
+        write_code( (src_ptr&~3)+8, dest);                  \
     }                                                       \
 }
 
@@ -132,7 +147,15 @@ void uninstall_hook(struct hook *hook) {
 }
 
 //This method actually installs a hook
-struct hook *add_hook(void *target, void (*pre_hook)(struct saved_regs* regs, void *arg), uint32_t (*post_hook)(uint32_t retval, void *arg), void *arg) {
+//We declare the symbol locally to avoid unecesarry declarations
+
+#define add_hook(target, pre_hook, post_hook, arg) {    \
+    void *target_ptr;                                   \
+    get_symbol_address(target, target_ptr)              \
+    __add_hook(target_ptr, pre_hook, post_hook, arg);   \
+}
+
+struct hook *__add_hook(void *target, void (*pre_hook)(struct saved_regs* regs, void *arg), uint32_t (*post_hook)(uint32_t retval, void *arg), void *arg) {
     if (installed_hooks+1 >= max_hooks) {
         #ifdef print
             print("too many hooks\n");
@@ -260,7 +283,7 @@ asm(
 
 #ifdef print
 #ifdef print_ptr
-    #define trace(func, n, hasret) add_hook(&func, &trace_prehook_##n, &trace_posthook_##hasret, #func);
+    #define trace(func, n, hasret) add_hook(func, &trace_prehook_##n, &trace_posthook_##hasret, #func);
 
     #define jump_trace(func, target, n, hasret){    \
         patch_jump(func, target)                    \

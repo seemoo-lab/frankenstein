@@ -95,16 +95,16 @@ void hci_install_hooks() {
     trace(btuartcommon_SendHCICommandBackToTransportThread, 2, true);
 
     //hci uart tx
-    patch_jump(&uart_DirectWrite, &uart_DirectWrite_hook); //not required 
-    patch_jump(&uart_SendSynch, &uart_SendSynch_hook); //notr required
+    patch_jump(uart_DirectWrite, &uart_DirectWrite_hook); //not required 
+    patch_jump(uart_SendSynch, &uart_SendSynch_hook); //notr required
     //ret0 is needed to notify the state machine, that the data has been sent immediately
     add_hook(uart_SendAsynch, &uart_SendAsynch_hook, ret0, NULL); //XXX Working
 
     //hci uart rx
-    patch_jump(&mpaf_hci_EventFilter, &ret0); //we dont want any hci events to be droped
-    patch_jump(&uart_SetAndCheckReceiveAFF, &ret0); //there is never data available on uart
-    patch_jump(&uart_DirectRead, &uart_DirectRead_hook);
-    patch_jump(&uart_ReceiveSynch, &uart_ReceiveSynch_hook);
+    patch_jump(mpaf_hci_EventFilter, &ret0); //we dont want any hci events to be droped
+    patch_jump(uart_SetAndCheckReceiveAFF, &ret0); //there is never data available on uart
+    patch_jump(uart_DirectRead, &uart_DirectRead_hook);
+    patch_jump(uart_ReceiveSynch, &uart_ReceiveSynch_hook);
 
     trace(uart_ReceiveAsynch, 3, true);
     trace(uart_DirectRead, 3, true);

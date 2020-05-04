@@ -121,7 +121,7 @@ void _start() {
     print("Hello \\o/\n");
 
     if (xmit_state_target) {
-        xmit_hook = add_hook(xmit_state_target, xmit_state, NULL, NULL);
+        xmit_hook = __add_hook(xmit_state_target, xmit_state, NULL, NULL);
         print("Hook Added\n");
     } else
         print("Target is NULL\n");

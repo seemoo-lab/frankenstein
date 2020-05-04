@@ -109,14 +109,14 @@ void queue_add_hooks() {
     trace(msgqueue_Get, 1, true);
     trace(msgqueue_GetNonblock, 1, true);
 
-    add_hook(&msgqueue_Get, &queue_read_access, NULL, NULL);
-    add_hook(&msgqueue_PrivateGet, &queue_read_access, NULL, NULL);
-    add_hook(&msgqueue_GetNonblock, &queue_read_access, NULL, NULL);
+    add_hook(msgqueue_Get, &queue_read_access, NULL, NULL);
+    add_hook(msgqueue_PrivateGet, &queue_read_access, NULL, NULL);
+    add_hook(msgqueue_GetNonblock, &queue_read_access, NULL, NULL);
     add_hook(msgqueue_PrivateGet, queue_read_access, NULL, NULL);
 
 
-    add_hook(&msgqueue_Put, &queue_write_access, NULL, NULL);
-    add_hook(&msgqueue_PutInFront, &queue_write_access, NULL, NULL);
+    add_hook(msgqueue_Put, &queue_write_access, NULL, NULL);
+    add_hook(msgqueue_PutInFront, &queue_write_access, NULL, NULL);
 
     add_hook(osapi_sendQueueItem, &queue_read_access, NULL, NULL);
     add_hook(osapi_getQueueItem, &queue_write_access, NULL, NULL);
@@ -131,12 +131,12 @@ void queue_add_hooks() {
     add_hook(_tx_queue_front_send, &queue_write_access, NULL, NULL);
 
 
-    //add_hook(&slist_get, &slist_read_access, NULL, NULL);  //Too short + misaligned
-    //add_hook(&slist_tail, &slist_read_access, NULL, NULL); // Function too short
-    add_hook(&slist_front, &slist_read_access, NULL, NULL);
+    //add_hook(slist_get, &slist_read_access, NULL, NULL);  //Too short + misaligned
+    //add_hook(slist_tail, &slist_read_access, NULL, NULL); // Function too short
+    add_hook(slist_front, &slist_read_access, NULL, NULL);
 
-    add_hook(&slist_add_after, &slist_write_access, NULL, NULL);
-    add_hook(&slist_add_front, &slist_write_access, NULL, NULL);
-    add_hook(&slist_add_tail, &slist_write_access, NULL, NULL);
-    add_hook(&slist_add_before, &slist_write_access, NULL, NULL);
+    add_hook(slist_add_after, &slist_write_access, NULL, NULL);
+    add_hook(slist_add_front, &slist_write_access, NULL, NULL);
+    add_hook(slist_add_tail, &slist_write_access, NULL, NULL);
+    add_hook(slist_add_before, &slist_write_access, NULL, NULL);
 }
