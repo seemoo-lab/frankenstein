@@ -81,7 +81,7 @@ void inquiry() {
         }
         else {
             print("pcktdata: ");
-            read(inq_fd, 0x370000, 16);
+            read(inq_fd, (void *)0x370000, 16);
             hexdump(0x370000, 16);
             print("\n");
             //char fhs[] = "\x70\x21\xc9\x74\xaf\x83\xc0\x6c\xff\x5a\x48\x8d\x5a";

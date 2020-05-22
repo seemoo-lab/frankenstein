@@ -43,6 +43,6 @@ SECTIONS {
   .Segment_0x640000 0x640000:{ gen/default/Segment_0x640000.segment.o} > Segment_0x640000
   .Segment_0x650000 0x650000:{ gen/default/Segment_0x650000.segment.o} > Segment_0x650000
   .Segment_0xe0000000 0xe0000000:{ gen/default/Segment_0xe0000000.segment.o} > Segment_0xe0000000
-  .src.bss 0xbeee000:{ gen/src.o (.bss)}
-  .src 0xbeef000:{ gen/src.o (*)}
+  .src 0xbeef000:{ gen/src.o (.text)}
+  .bss 0xb4ef000:{ gen/src.o (*)}
 }

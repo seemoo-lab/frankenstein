@@ -4,21 +4,22 @@ void cont();
 
 #define EMULATED
 
+
+#include <frankenstein.h>
+#include <frankenstein/threadx/threading.h>
+
 //utils
 int ret1() { return 1; }
 int ret0() { return 0; }
 void die() {  print_caller(); print(" die();\n"); exit(-1);}
 void clean_exit() {  exit(0);}
 
-#include <frankenstein/xmit_state_emu.h>
 #include "fwdefs.h"
-#include <frankenstein/hook.h>
 #include "hci.h"
 #include "lm.h"
 #include "timer.h"
 #include "dynamic_memory.h"
 
-#include <frankenstein/threadx/threading.h>
 
 /*
 Hook for Peripheral UART
@@ -151,6 +152,7 @@ void patch_code() {
     hci_install_hooks();
 
     add_lm_hooks();
+    bcs_add_hooks();
 
 
     //add heap sanitizer

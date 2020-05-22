@@ -292,8 +292,6 @@ asm(
     #define trace_color "\033[;36m"
     void trace_prehook_0(struct saved_regs *regs, void *func_name) {  \
         print(trace_color);
-        //print("thrd=");
-        //print_ptr(_tx_thread_current_ptr);
         print("lr=");
         print_ptr(regs->lr);
         print(" ");
@@ -304,8 +302,6 @@ asm(
 
     void trace_prehook_1(struct saved_regs *regs, void *func_name) {  \
         print(trace_color);
-        //print("thrd=");
-        //print_ptr(_tx_thread_current_ptr);
         print("lr=");
         print_ptr(regs->lr);
         print(" ");
@@ -317,8 +313,6 @@ asm(
 
     void trace_prehook_2(struct saved_regs *regs, void *func_name) {  \
         print(trace_color);
-        //print("thrd=");
-        //print_ptr(_tx_thread_current_ptr);
         print("lr=");
         print_ptr(regs->lr);
         print(" ");
@@ -332,8 +326,6 @@ asm(
 
     void trace_prehook_3(struct saved_regs *regs, void *func_name) {  \
         print(trace_color);
-        //print("thrd=");
-        //print_ptr(_tx_thread_current_ptr);
         print("lr=");
         print_ptr(regs->lr);
         print(" ");
@@ -349,8 +341,6 @@ asm(
 
     void trace_prehook_4(struct saved_regs *regs, void *func_name) {  \
         print(trace_color);
-        //print("thrd=");
-        //print_ptr(_tx_thread_current_ptr);
         print("lr=");
         print_ptr(regs->lr);
         print(" ");
@@ -367,7 +357,6 @@ asm(
     }
 
 
-
     uint32_t trace_posthook_true(uint32_t retval, void *func_name) {
         print(trace_color " = ");
         print_ptr(retval);
@@ -379,6 +368,15 @@ asm(
     uint32_t trace_posthook_false(uint32_t retval, void *func_name) {
         print(trace_color ";\n\033[;00m");
         return retval;
+    }
+
+    //This seems to have changed in gcc 10.1
+
+    uint32_t trace_posthook_1(uint32_t retval, void *func_name) {
+        trace_posthook_true(retval, func_name);
+    }
+    uint32_t trace_posthook_0(uint32_t retval, void *func_name) {
+        trace_posthook_false(retval, func_name);
     }
 
 #endif

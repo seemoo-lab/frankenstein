@@ -3,9 +3,6 @@
 #include "queue.h"
 
 
-char bd_addr[] = "\xbf\x56\x84\xc7\x95\xf8";
-
-
 int n_steps = 128;
 void acl_idle_loop() {
     while(1) {

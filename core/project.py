@@ -598,7 +598,7 @@ class Project:
         sections_ld = ""
 
         #iterate over groups
-        for group in self.cfg["segment_groups"]:
+        for group in sorted(self.cfg["segment_groups"].keys()):
             #skip non active groups
             if not self.cfg["segment_groups"][group]["active"]:
                 continue
@@ -615,8 +615,8 @@ class Project:
                 sections_ld += "  .%s 0x%x:{ gen/%s/%s.segment.o} > %s\n" % (name, addr, group, name, name)
 
         #define where to put the actual code
-        sections_ld += "  .src.bss 0x%x:{ gen/src.o (.bss)}\n" %  (self.cfg["config"]["EMULATION_CODE_BASE"]-4096)
-        sections_ld += "  .src 0x%x:{ gen/src.o (*)}\n" %  self.cfg["config"]["EMULATION_CODE_BASE"]
+        sections_ld += "  .src 0x%x:{ gen/src.o (.text)}\n" %  self.cfg["config"]["EMULATION_CODE_BASE"]
+        sections_ld += "  .bss 0x%x:{ gen/src.o (*)}\n" %  (self.cfg["config"]["EMULATION_CODE_BASE"]-(10*1024*1024))
 
         with open("%s/gen/segments.ld" % self.path, "w") as f:
             f.write("INCLUDE gen/symbols.ld;\n")

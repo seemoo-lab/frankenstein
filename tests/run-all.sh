@@ -5,12 +5,12 @@ cd ..
 
 set -e
 
-python tests/project.py CYW20735B1 execute.exe heap.exe
-python tests/hci.py CYW20735B1
+python3 tests/project.py CYW20735B1 execute.exe heap.exe
+python3 tests/hci.py CYW20735B1
 
-python tests/project.py CYW20819A1 execute.exe
-#python tests/hci.py CYW20819A1
+python3 tests/project.py CYW20819A1 execute.exe
+#python3 tests/hci.py CYW20819A1
 
-python tests/project.py BCM4375BBCM4375B1
+python3 tests/project.py BCM4375BBCM4375B1
 
-echo "" | python core/uc.py projects/CYW20735B1/gen/execute.exe
+echo "" | python3 core/uc.py projects/CYW20735B1/gen/execute.exe
