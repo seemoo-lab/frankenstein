@@ -67,7 +67,7 @@ void _start() {
     return;
 
     if (xmit_state_target) {
-        xmit_hook = add_hook(xmit_state_target, xmit_state, NULL, NULL);
+        xmit_hook = _add_hook(xmit_state_target, xmit_state, NULL, NULL);
         print("Hook Added\n");
     } else
         print("Target is NULL\n");

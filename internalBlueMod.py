@@ -257,9 +257,9 @@ class CmdXmitState(CmdLoadELF):
 
                 groupName = datetime.now().strftime("internalBlue_%m.%d.%Y_%H.%M.%S")
                 self.project = Project("projects/"+self.internalblue.fw.FW_NAME)
-                self.project.add_group(groupName)
-                self.project.deactivate_all_groups()
-                self.project.set_active_group(groupName, True)
+                self.project.group_add(groupName)
+                self.project.group_deactivate_all()
+                self.project.group_set_active(groupName, True)
                 self.project.save()
                 self.project.add_symbol(groupName, "cont", self.cont|1)
                 self.project.add_symbol(groupName, "get_int", symbols["get_int"])

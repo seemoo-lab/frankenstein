@@ -12,24 +12,6 @@
 
 
 
-
-/*
-Some debug stuff, deprecated
-*/ /*
-void dump_rx_state(){
-    print_var(*(int*)(0x249e58+429));
-    print_var(g_uart_DriverState);
-    print_var(g_ptu_ISR);
-    print_var(*(int*)(0x360084));
-    print_var(*(int*)(0x3600a8));
-    print_var(*(int*)(0x3600cc));
-    print_var(*(int*)(0x3382d8));
-    print_var(*(char*)(0x249f70+13));
-    print_var(*(char*)(0x249f70+14));
-    // *(int*)(0x360084) = 0x0a;
-} */
-
-
 /*
 If the firmware goes to an idle state, we execute the interrupt
 and notify the firmware for new HCI data
@@ -129,6 +111,7 @@ void hci_install_hooks() {
     trace(mpaf_thread_PostMsgToHandler, 1, false);
     trace(bthci_lm_thread_SendMessageToThread, 1, false);
     trace(uart_SetupForRXDMA, 1, false);
+    trace(uart_ReceiveDMADoneInterrupt, 1, false);
 }
 
 

@@ -198,11 +198,11 @@ def editGroup(request):
 
             project = getProjectByName(projectName)
             if "actionUpdate" in request.POST:
-                project.update_group(oldGroupName, newGroupName)
-                project.set_active_group(newGroupName, active)
+                project.group_update(oldGroupName, newGroupName)
+                project.group_set_active(newGroupName, active)
                 project.save()
             if "actionDelete" in request.POST:
-                project.delete_group(oldGroupName)
+                project.group_delete(oldGroupName)
                 project.save()
 
             return HttpResponse(project.error_msgs)

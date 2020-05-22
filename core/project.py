@@ -1,11 +1,10 @@
 import json
 import os
-from elftools.elf import elffile
 import shutil
 from distutils.spawn import find_executable
 import inspect
 
-
+from core.loaders.elf import elfloader
 
 makefile = """
 .PHONY=all
@@ -56,12 +55,14 @@ SECTIONS {
 """
 
 
-
-
 class Project:
-    def __init__(self, path):
+    def __init__(self, path, allow_create=True):
         self.path = path
         if not os.path.isdir(path):
+            if not allow_create:
+                print("Project %s does not exist")
+                raise Exception()
+
             os.mkdir(path)
             os.mkdir(path + "/gen")
             os.mkdir(path + "/segment_groups")
@@ -126,9 +127,40 @@ class Project:
 
         self.save()
             
-
-
     def load_elf(self, fname, load_segments=True, load_symbols=True, group=None):
+        #add group
+        if group is None or len(group) == 0:
+            if group != "global" and group not in self.cfg["segment_groups"]:
+                group = os.path.basename(fname)
+                if not self.group_add(group):
+                    self.error("Could not create group %s" % group)
+                    return False
+
+        if group == "global" and load_segments:
+            self.error("Can not load segments to global group")
+            return False
+                
+        e = elfloader(fname)
+
+        #load sections
+        if load_segments:
+            for segment in e.iter_segments():
+                    vaddr = segment["vaddr"]
+                    size = segment["size"]
+                    data = segment["data"]
+                    name = "Segment_0x%x" % (vaddr)
+                    if not self.add_segment(group, name, vaddr, data, size):
+                        self.error("Failed to add segment %s" % name)
+                        return False
+
+        #symbols
+        if load_symbols:
+            for symbol in e.iter_symbols():
+                self.add_symbol(group, symbol["name"], symbol["value"])
+
+            self.save()
+
+    def load_core(self, fname, load_segments=True, load_symbols=True, group=None):
         f = open(fname, "rb")
         elf = elffile.ELFFile(f)
 
@@ -136,7 +168,7 @@ class Project:
         if group is None or len(group) == 0:
             if group != "global" and group not in self.cfg["segment_groups"]:
                 group = os.path.basename(fname)
-                if not self.add_group(group):
+                if not self.group_add(group):
                     self.error("Could not create group %s" % group)
                     return False
 
@@ -160,14 +192,26 @@ class Project:
         #symbols
         if load_symbols:
             for section in elf.iter_sections():
-                if section.header.sh_type == 'SHT_SYMTAB':
+                if section.header.sh_type in ['SHT_SYMTAB', 'SHT_DYNSYM']:
                     for symbol in section.iter_symbols():
                         name = symbol.name
                         value = symbol.entry["st_value"]
                         typ = symbol.entry["st_info"]["type"] # STT_NOTYPE STT_FUNC STT_FILE
-                        print (typ, name, value)
+                        #print (typ, name, value)
                         self.add_symbol(group, name, value)
+
+                if section.header.sh_type in ['SHT_NOTE']:
+                    for note in section.iter_notes():
+                        if note.n_type == "NT_FILE":
+                            print("found NT_FILE")
+                            for fname, desc in zip(note["n_desc"]["filename"],  note["n_desc"]["Elf_Nt_File_Entry"]):
+                                print(fname, desc)
+
+
+
             self.save()
+
+
 
     def load_idb(self, fname, load_segments=False, load_functions=True):
         import idb
@@ -236,7 +280,7 @@ class Project:
     """
     Group manipulation
     """
-    def add_group(self, name):
+    def group_add(self, name):
         if name in self.cfg["segment_groups"] or name == "global":
             self.error("Group %s already exists" % name)
             return False
@@ -269,7 +313,7 @@ class Project:
 
         return group_path
 
-    def update_group(self, old_group, new_group):
+    def group_update(self, old_group, new_group):
         if old_group not in self.cfg["segment_groups"]:
             self.error("Group %s does not exist" % (old_group))
             return False
@@ -286,7 +330,7 @@ class Project:
             self.error("Could not get path for group %s" % (new_group))
             return False
 
-        if not self.add_group(new_group):
+        if not self.group_add(new_group):
             self.error("Could not add group" % (new_group))
             return False
 
@@ -298,7 +342,7 @@ class Project:
         self.cfg["segment_groups"][new_group] = group
         return True
 
-    def delete_group(self, group):
+    def group_delete(self, group):
         if group not in self.cfg["segment_groups"]:
             self.error("Group %s does not exist" % (group))
             return False
@@ -317,7 +361,7 @@ class Project:
 
         return True
 
-    def set_active_group(self, group, value=True):
+    def group_set_active(self, group, value=True):
         if group not in self.cfg["segment_groups"]:
             self.error("Group %s does not exist" % (group))
             return False
@@ -325,7 +369,7 @@ class Project:
         self.cfg["segment_groups"][group]["active"] = value
         return True
 
-    def deactivate_all_groups(self):
+    def group_deactivate_all(self):
         for groupName in self.cfg["segment_groups"]:
             self.cfg["segment_groups"][groupName]["active"] = False
 
@@ -763,6 +807,24 @@ class Project:
 
         return True
 
+    """
+    Debug
+    """
+    def show(self):
+        for group_name in self.cfg["segment_groups"]:
+            print("Group %s, Symbols: %d, Active:%s " %  
+                (   group_name, 
+                    len(self.cfg["segment_groups"][group_name]["symbols"]),
+                    self.cfg["segment_groups"][group_name]["active"]) )
+
+            for group_name in self.cfg["segment_groups"]:
+                segments = self.cfg["segment_groups"][group_name]["segments"]
+                for segment_name in segments:
+                    print(self.cfg["segment_groups"][group_name]["segments"][segment_name])
+
+            print()
+
+
 
 
 if __name__ == "__main__":
@@ -775,8 +837,8 @@ if __name__ == "__main__":
 
     #p = Project("/tmp/test_project")
     ##p.load_elf("../gen/mempatch", load_symbols=False)
-    ##p.load_elf("../src/breakpoint", load_segments=False)
-    p.load_idb(sys.argv[2])
+    p.load_core(sys.argv[2], load_segments=False, group="global")
+    #p.load_idb(sys.argv[2])
     p.save()
 
     #p.create_build_scripts()

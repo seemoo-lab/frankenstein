@@ -23,8 +23,8 @@ def test_project_basic(project_name):
     p = Project("projects/%s" % project_name)
 
     print("Set default group active")
-    assert p.deactivate_all_groups()
-    assert p.set_active_group("default")
+    assert p.group_deactivate_all()
+    assert p.group_set_active("default")
 
     print("Save")
     assert p.save()

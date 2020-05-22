@@ -40,9 +40,17 @@ int dlist_cont(void *dlist);
 void *GKI_os_malloc(int);
 GKI_getbuf(int);
 void BtIntDone();
+extern int sr_ptu_status_addr4;
+extern int dc_ptu_uart_tfl;
 void _start() {
     patch_code();
-    print_ptr(GKI_getbuf(420));
+
+    //print_ptr(GKI_getbuf(420));
+    hci_rx_fd = hci_tx_fd = 0;
+    
+    read(0, &dc_ptu_uart_tfl, 4);
+    uart_ReceiveDMADoneInterrupt();
+    //interruptvector_PTU();
 
 
     exit(0);
