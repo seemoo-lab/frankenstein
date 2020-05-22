@@ -41,6 +41,6 @@ SECTIONS {
   .Segment_0x640000 0x640000:{ gen/default/Segment_0x640000.segment.o} > Segment_0x640000
   .Segment_0x650000 0x650000:{ gen/default/Segment_0x650000.segment.o} > Segment_0x650000
   .Segment_0xe0000000 0xe0000000:{ gen/default/Segment_0xe0000000.segment.o} > Segment_0xe0000000
-  .src 0xbeef000:{ gen/src.o (.text)}
-  .bss 0xb4ef000:{ gen/src.o (*)}
+  .text 0xbeef000:{ gen/src.o (.text)}
+  .data ALIGN(LOADADDR(.text)+SIZEOF(.text), 0x1000):{ * (*)}
 }

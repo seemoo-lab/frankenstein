@@ -615,8 +615,8 @@ class Project:
                 sections_ld += "  .%s 0x%x:{ gen/%s/%s.segment.o} > %s\n" % (name, addr, group, name, name)
 
         #define where to put the actual code
-        sections_ld += "  .src 0x%x:{ gen/src.o (.text)}\n" %  self.cfg["config"]["EMULATION_CODE_BASE"]
-        sections_ld += "  .bss 0x%x:{ gen/src.o (*)}\n" %  (self.cfg["config"]["EMULATION_CODE_BASE"]-(10*1024*1024))
+        sections_ld += "  .text 0x%x:{ gen/src.o (.text)}\n" %  self.cfg["config"]["EMULATION_CODE_BASE"]
+        sections_ld += "  .data ALIGN(LOADADDR(.text)+SIZEOF(.text), 0x1000):{ * (*)}\n"
 
         with open("%s/gen/segments.ld" % self.path, "w") as f:
             f.write("INCLUDE gen/symbols.ld;\n")
