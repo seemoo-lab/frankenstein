@@ -19,6 +19,8 @@ def run(cmd, stdin="", returncode=0):
         sys.exit(-1)
 
 def test_project_basic(project_name):
+    run("make -C projects/%s" % project_name)
+
     print("Loading project %s" % project_name)
     p = Project("projects/%s" % project_name)
 

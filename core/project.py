@@ -54,6 +54,11 @@ SECTIONS {
 }
 """
 
+symbol_name_blacklist = [
+    "_start",
+    "exit"
+]
+
 
 class Project:
     def __init__(self, path, allow_create=True):
@@ -73,6 +78,10 @@ class Project:
 
 
         if not os.path.isfile("%s/project.json" % self.path):
+            if not allow_create:
+                print("Project %s does not exist")
+                raise Exception()
+
             self.cfg = {}
             self.cfg["segment_groups"] = {"default":{"active":True, "symbols":{}, "segments":{}}}
             self.cfg["symbols"] = {}
@@ -525,9 +534,13 @@ class Project:
     Symbols
     """
     def add_symbol(self, group, name, addr):
-        if name == "" or "$" in name or name == "_start":
+        if name == "" or "$" in name:
             self.error("Invalid symbol name %s" % name)
             return False
+
+        if name in symbol_name_blacklist:
+            self.error("Symbol %s renamed name __imported__%s" % (name, name))
+            name = "__imported__"+name
 
         #if not self.is_valid_addr(addr, group=group):
         #    self.error( "Symbol %s (0x%x) in no segment" % (name, addr))

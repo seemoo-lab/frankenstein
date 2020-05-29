@@ -36,7 +36,8 @@ class elfloader:
                     value = symbol.entry["st_value"] + self.offset
                     typ = symbol.entry["st_info"]["type"] # STT_NOTYPE STT_FUNC STT_FILE
 
-                    yield {"name": name, "value": value, "type": typ}
+                    if name != "" and "$" not in name:
+                        yield {"name": name, "value": value, "type": typ}
 
             #  Find ELF files in core file
             if section.header.sh_type in ['SHT_NOTE']:
