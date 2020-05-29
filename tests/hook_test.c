@@ -1,25 +1,34 @@
 #include <frankenstein.h>
 
+#define fail(x)                         \
+    print("\033[31m"x"\033[0m\n");      \
+    exit(-1);                           \
+
+#ifdef TEST_THUMB
  __attribute__((target("thumb")))
+#endif
 void patchme_return() {
-    print("This should never be called\n")
-    exit(-1);
+    fail("This should never be called")
 }
 
+#ifdef TEST_THUMB
  __attribute__((target("thumb")))
+#endif
 int patchme_jump() {
-    print("This should never be called\n")
+    fail("This should never be called")
+
     return 0;
 }
 
 int patchme_hook_called = 0;
 
+#ifdef TEST_THUMB
  __attribute__((target("thumb")))
+#endif
 int patchme_hook(int arg) {
     patchme_hook_called = 1;
     if (!arg) {
-        print("Wrong argument\n");
-        return 1;
+        fail("Wrong argument");
     }
     return 0;
 }
@@ -28,22 +37,25 @@ int patchme_hook(int arg) {
 void test() {
     print("Testing patch_return\n");
     patchme_return();
+    print("\033[32mOk\033[0m\n");
 
     print("Testing patch_jump\n");
+
     if (!patchme_jump()) {
-        exit(-1);
+        fail("Wrong return value")
     }
+    print("\033[32mOk\033[0m\n");
 
     print("Testing hook\n");
     if (!patchme_hook(0)) {
-        print("Wrong ret value\n");
+        fail("Wrong ret value");
     }
     if (!patchme_hook_called) {
-        print("Original function not called\n");
-        exit(-1);
+        fail("Original function not called");
     }
+    print("\033[32mOk\033[0m\n");
 
-    print("Done\n");
+    print("\033[32mDone\033[0m\n");
 }
 
 int _start() { 

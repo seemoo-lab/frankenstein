@@ -299,10 +299,10 @@ class emu:
             pc = self.regs["pc"]
             md = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB)
             instr = list(md.disasm(self.uc.mem_read(pc, 4), pc))[0]
-            instr = instr.mnemonic + "   " + instr.op_str
+            instr = instr.mnemonic + "   " + instr.op_str 
         except:
             import traceback; traceback.print_exc()
-            instr = "??"
+            instr = hexlify(self.uc.mem_read(pc, 4))
 
         # Save tracepoint object
         tp = {}
@@ -402,7 +402,7 @@ class emu:
     """
     def run(self, timeout=300):
         try:
-            print("runing until exit @ 0x%x" % self.symbols["exit"])
+            print("running until exit @ 0x%x" % self.symbols["exit"])
             self.uc.emu_start(self.elf.header.e_entry, self.symbols["exit"], timeout=timeout*UC_SECOND_SCALE)
             self.trace_state_change("Exit")
         except KeyboardInterrupt:

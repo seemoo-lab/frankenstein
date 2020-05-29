@@ -113,15 +113,14 @@ void patch_code() {
     patch_return(_tx_v7m_set_int);
     patch_return(_tx_v7m_get_int);
     patch_jump(_tx_thread_system_return, _tx_thread_system_return_hook);
-
     patch_return(osapi_interruptContext);
-    //patch_jump(osapi_interruptContext, _tx_thread_system_return);
-    //patch_return(osapi_interruptContext);
 
     //Functions, we do not support
-    patch_return(0xa43ee);  //synch_GetXSPRExceptionNum
-    patch_return(0x20ffba); //get_and_disable_int 2nd ed?!
-    patch_return(0x20ffb2); //get_and_disable_int 2nd ed?!
+    patch_return(synch_GetXPSRExceptionNumber); //XXX Why s double needed?!
+    patch_return(synch_GetXPSRExceptionNumber);
+    patch_return(__ram2__set_and_disable_int);
+    patch_return(__ram__get_and_disable_int);
+    patch_return(__ram__set_and_disable_int);
     patch_return(btclk_DelayXus);
     patch_return(btclk_Wait4PclkChange);
     patch_return(btclk_AdvanceNatClk_clkpclkHWWA);
@@ -135,8 +134,10 @@ void patch_code() {
 
     //Watchdog HW Reset
     patch_jump(wdog_generate_hw_reset, &die);
+
     //Enable Peripheral UART
     patch_jump(puart_write, &puart_write_hook);
+
     //Trace dbfw Assert Fatals
     trace(dbfw_assert_fatal, 1, false);
 

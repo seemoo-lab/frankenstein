@@ -1359,6 +1359,9 @@ __patch_addin__ulp_dple_getEffeMaxTxOctets_tier2_0_patch_0_bt_blecore_0_ulp_dple
 __patch_addin__wiced_trans_spi_event_serialize_tier2_0_patch_0_mpaf_wiced_framework_0_wiced_transport_spi_patch_1_c_34 = 0x20fff4;
 __patch_sb_addin__pmu_SDS0x7C_tier2_0_patch_0_foundation_pmu_0_pmu_sds_patch_1_c_62 = 0x2834c4;
 __printf = 0xcd42d;
+__ram2__set_and_disable_int = 0x20ffb3;
+__ram__get_and_disable_int = 0x20ffbb;
+__ram__set_and_disable_int = 0x20ffbb;
 __reset = 0x3bd;
 __rt_SIGRTMEM = 0x131695;
 __rt_SIGRTMEM_inner = 0x1316fd;

@@ -279,13 +279,8 @@ void bcs_add_hooks() {
 
     patch_return(btclk_DelayXus);
     patch_return(btclk_AdvanceNatClk_clkpclkHWWA);
-    patch_return(0x0009b104);
-    patch_return(0x0009b38a);
-    patch_return(0x0009b35c);
-    patch_return(0x9b414);
-    patch_return(0x9b3da);
-    patch_return(0x40cda);
-    //patch_return(&_afhPipelineRssiScanTaskSlotInt);
+    patch_return(btclk_AdvanceNatClk_clkpclk);
+    patch_return(_afhPipelineRssiScanTaskSlotInt);
 
     trace(bcs_dmaGetRxBuffer, 3, false);
     trace(bcs_dmaRxEnableEir, 2, false);

@@ -25,36 +25,66 @@ without the need of declaring it first in C
 /*
 patch code with "bx lr"
 */
-#define patch_return(func) {                                \
-    uint32_t func_ptr;                                      \
-    get_symbol_address(func, func_ptr);                     \
-    if (~func_ptr & 0x2) { /* aligned */                    \
-        write_code( (func_ptr&~3) ,                         \
-        0x00004770 | ((func_ptr&~1) & 0xffff0000));         \
-    } else { /* misaligned jump */                          \
-        write_code( (func_ptr&~3)  ,                        \
-        0x47700000 | ((func_ptr&~1) & 0x0000ffff));         \
-    }                                                       \
+void patch_return_thumb(size_t func) {
+    size_t orig = *(size_t *)(func&~1);
+    if (~func & 0x2) { /* aligned */
+        write_code( (func&~3) , 0x00004770 | (orig & 0xffff0000));
+    } else { /* misaligned */
+        write_code( (func&~3) , 0x47700000 | (orig & 0x0000ffff));
+    }
+}
+
+void patch_return_arm(size_t func) {
+    write_code( func , 0xe12fff1e);
+}
+
+#define patch_return(func) patch_return_offset(func, 0)
+#define patch_return_offset(func, offset) { \
+    uint32_t func_ptr;                      \
+    get_symbol_address(func, func_ptr);     \
+    func_ptr += offset;                     \
+    if (func_ptr & 1)                       \
+        patch_return_thumb(func_ptr);       \
+    else                                    \
+        patch_return_arm(func_ptr);     \
 }
 
 /*
-installs a jump at a given address using "ldr pc, [pc]"
-for not aligned addresses a nop is inserted to align the code
+installs a jump at a given address using 
+    Thumb mode:     ldr pc, [pc]
+    Arm mode:       ldr pc, [pc, #-4]
+or not aligned addresses a nop is inserted to align the code
 */
 
-#define patch_jump(src, dest) {                             \
-    uint32_t src_ptr;                                       \
-    get_symbol_address(src, src_ptr)                        \
-    if (~src_ptr & 0x2) { /* aligned jump */                \
-        write_code( (src_ptr&~3)  , 0xf000f8df);            \
-        write_code( (src_ptr&~3)+4, dest);                  \
-    } else { /* misaligned jump */                          \
-        uint32_t align = *(uint32_t*)(src_ptr&~3);          \
-        align = (align & 0x0000ffff) | (0xbf00<<16);        \
-        write_code( (src_ptr&~3)  , align);                 \
-        write_code( (src_ptr&~3)+4, 0xf000f8df);            \
-        write_code( (src_ptr&~3)+8, dest);                  \
-    }                                                       \
+void patch_jump_thumb(size_t src, size_t dest) {
+    if (~src & 0x2) { /* aligned jump */
+        write_code( (src & ~3)  , 0xf000f8df);
+        write_code( (src & ~3)+4, dest);
+    } else { /* misaligned jump */
+        size_t align = *(size_t*)(src&~3);
+        align = (align & 0x0000ffff) | (0xbf00<<16);
+        write_code( (src & ~3)  , align);
+        write_code( (src & ~3)+4, 0xf000f8df);
+        write_code( (src & ~3)+8, dest);
+    }
+}
+
+void patch_jump_arm(size_t src, size_t dest) {
+    write_code(src    , 0xe51ff004);
+    write_code(src + 4, dest);
+}
+
+
+#define patch_jump(src, dest) patch_jump_offset(src, dest, 0)
+
+#define patch_jump_offset(src, dest, offset) {      \
+    uint32_t src_ptr;                               \
+    get_symbol_address(src, src_ptr);               \
+    src_ptr += offset;                              \
+    if (src_ptr & 1)                                \
+        patch_jump_thumb(src_ptr, (size_t) dest);   \
+    else                                            \
+        patch_jump_arm(src_ptr, (size_t) dest);     \
 }
 
 
@@ -116,19 +146,10 @@ void install_hook(struct hook *hook) {
     hook->code_orig[1] = *(uint32_t*) ((x&~3)+4);
     hook->code_orig[2] = *(uint32_t*) ((x&~3)+8);
 
-    //aligned jump
-    if (~x & 0x2) {
-        write_code( (x&~3)  , 0xf000f8df);
-        write_code( (x&~3)+4, ((uint32_t)hook) | 1);
-
-    //misaligned jump
-    } else {
-        uint32_t align = *(uint32_t*)((uint32_t)(x)&~3);
-        align = (align & 0x0000ffff) | (0xbf00<<16);
-        write_code( (x&~3)  , align);
-        write_code( (x&~3)+4, 0xf000f8df);
-        write_code( (x&~3)+8, ((uint32_t)hook) | 1);
-    }
+    if (hook->target & 1)
+        patch_jump_thumb(hook->target, (size_t) hook | 1);
+    else
+        patch_jump_arm(hook->target, (size_t) hook | 1);
 }
 
 void uninstall_hook(struct hook *hook) {

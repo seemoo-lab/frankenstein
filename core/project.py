@@ -539,7 +539,7 @@ class Project:
             return False
 
         if name in symbol_name_blacklist:
-            self.error("Symbol %s renamed name __imported__%s" % (name, name))
+            self.error("Symbol %s renamed __imported__%s" % (name, name))
             name = "__imported__"+name
 
         #if not self.is_valid_addr(addr, group=group):
