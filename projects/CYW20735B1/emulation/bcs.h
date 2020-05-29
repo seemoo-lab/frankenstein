@@ -188,7 +188,7 @@ void bcs_advance_clock() {
 Dummy task performing random actions
 */
 void bcs_dummy() {
-    read(0, 0x370000, 16);
+    read(0, (void *)0x370000, 16);
     read(0, &sr_status, 2);
     read(0, &phy_status, 2);
     read(0, &pkt_hdr_status, 2);
@@ -221,31 +221,31 @@ void bcs_tick() {
     bcs_advance_clock();
 
     //bcs_info();
-    if (tb == 0x2822e0)
+    if (tb == (void *)0x2822e0)
         { print("tb = pageScan\n"); } //pagescan(); }
-    else if (tb == 0x20a9c8)
+    else if (tb == (void *)0x20a9c8)
         {print("tb = page\n");  page(); }
-    else if (tb == 0x282250)
+    else if (tb == (void *)0x282250)
         print("tb = inqScan\n")
-    else if (tb == 0x20a8e8)
+    else if (tb == (void *)0x20a8e8)
         { print("tb = inq\n"); inquiry(); }
-    else if (tb == 0x205914)
+    else if (tb == (void *)0x205914)
         { print("tb = tca\n"); bcs_dummy(); }
-    else if (tb == 0x281068)
+    else if (tb == (void *)0x281068)
         { print("tb = acl\n"); acl(); }
-    else if (tb == 0x22539c)
+    else if (tb == (void *)0x22539c)
         { print("tb = conntask?\n"); bcs_dummy(); }
-    else if (tb == 0x28218c)
+    else if (tb == (void *)0x28218c)
         { print("tb = afhRssiScan\n");}
 
     //LE
-    else if (tb == 0x2828b0)
+    else if (tb == (void *)0x2828b0)
         { print("tb = adv\n"); adv();}
-    else if (tb == 0x283300)
+    else if (tb == (void *)0x283300)
         { print("tb = bcsulp_scan\n"); le_scan();}
-    else if (tb == 0x283278)
+    else if (tb == (void *)0x283278)
         { print("tb = bcsulp_init\n"); le_scan();}//page_fd = 0; pagescan(); page_fd=-1;}
-    else if (tb == 0x281618)
+    else if (tb == (void *)0x281618)
         { print("tb = le_conn\n"); le_conn();}
     else
         print_var(tb);
@@ -254,14 +254,14 @@ void bcs_tick() {
     //Slot01 / Slot11
     if ((pcx_btclk & 3) == 0b01){
         print("Slot01\n");
-        sr_status =  (tb == 0x281068) ? 0x1d8 : 0x1c8;
+        sr_status =  (tb == (void *)0x281068) ? 0x1d8 : 0x1c8;
         phy_status = 0x10;
         bluetoothCoreInt_C();
         contextswitch();
     }
     if ((pcx_btclk & 3) == 0b11){
         print("Slot11\n");
-        sr_status =  (tb == 0x281068) ? 0x1d8 : 0x1c8;
+        sr_status =  (tb == (void *)0x281068) ? 0x1d8 : 0x1c8;
         phy_status = 0x68;
         bluetoothCoreInt_C();
         contextswitch();
@@ -346,9 +346,9 @@ void bcs_add_hooks() {
     trace(dma_RequestTransfer, 1, false);
 
     add_hook(bcs_dmaRxEnable, bcs_dma_hook, NULL, 0);
-    add_hook(bcs_dmaTxEnable, bcs_dma_hook, NULL, BCS_DMA_HOOK_TX);
-    add_hook(bcs_dmaRxEnableEir, bcs_dma_hook, NULL, BCS_DMA_HOOK_EIR);
-    add_hook(bcs_dmaTxEnableEir, bcs_dma_hook, NULL, BCS_DMA_HOOK_TX | BCS_DMA_HOOK_EIR);
+    add_hook(bcs_dmaTxEnable, bcs_dma_hook, NULL, (void *)BCS_DMA_HOOK_TX);
+    add_hook(bcs_dmaRxEnableEir, bcs_dma_hook, NULL, (void *)BCS_DMA_HOOK_EIR);
+    add_hook(bcs_dmaTxEnableEir, bcs_dma_hook, NULL, (void *)(BCS_DMA_HOOK_TX | BCS_DMA_HOOK_EIR));
     trace(bcs_dmaIsTransferComplete, 2, false);
 
     trace(bcs_dmaRxEnableEir, 2, false);

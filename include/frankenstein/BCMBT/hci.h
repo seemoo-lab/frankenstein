@@ -57,7 +57,7 @@ Reading HCI packets
 This is called in the interrupt handler to complete a Asynch read
 */
 
-void uart_DirectRead_hook(char *data, int len) {
+int uart_DirectRead_hook(char *data, int len) {
     int ret;
     print("\033[;32mHCI Direct Read ");
     for (ret = -1; ret < 0; ret = read(hci_rx_fd, data, len));

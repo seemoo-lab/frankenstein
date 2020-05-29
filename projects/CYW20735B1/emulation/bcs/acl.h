@@ -116,7 +116,7 @@ void acl() {
         }
         else {
             print("pcktdata: ");
-            read(acl_fd, 0x370000, len);
+            read(acl_fd, (void *)0x370000, len);
             hexdump(0x370000, len);
             print("\n");
         }

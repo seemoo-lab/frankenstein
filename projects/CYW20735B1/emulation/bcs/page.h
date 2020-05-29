@@ -48,7 +48,7 @@ void pagescan() {
     //if (acl_fd == 0 || acl_fd == -1) acl_fd = tcp_connect(127,0,0,1,31337);
     acl_role = ACL_ROLE_SLAVE;
 
-    read(page_fd, 0x370000, 16);
+    read(page_fd, (void*)0x370000, 16);
     read(page_fd, &sr_status, 2);
     read(page_fd, &phy_status, 2);
     read(page_fd, &pkt_hdr_status, 2);

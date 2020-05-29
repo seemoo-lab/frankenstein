@@ -41,7 +41,7 @@ void adv() {
         sr_status =  0x1c8;
         phy_status = 0x1;
 
-        read(le_fd, 0x370c00, 32);
+        read(le_fd, (void *)0x370c00, 32);
 
 
         bluetoothCoreInt_C();
@@ -79,7 +79,7 @@ void le_scan() {
 
         print_var(wib_rx_status)
         print_var(wib_pkt_log)
-        read(le_fd, 0x370c00, 256);
+        read(le_fd, (void *)0x370c00, 256);
 
         bluetoothCoreInt_C();
         contextswitch();
@@ -127,7 +127,7 @@ void le_conn() {
 
         print_var(wib_rx_status)
         print_var(wib_pkt_log)
-        read(le_fd, 0x370c00, 256);
+        read(le_fd, (void *)0x370c00, 256);
         //for (int i=0; i < 0x100; i++) ((char *)0x370c00)[i] = (char)(i&0xff);
 
         bluetoothCoreInt_C();

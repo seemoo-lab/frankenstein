@@ -2,14 +2,13 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
 
 #ifndef FRANKENSTEIN_UTILS_H
 #define FRANKENSTEIN_UTILS_H
 
 //Lib GCC import to support software division
 #include "lgcc.h"
+
 
 
 char hex_chars[] = "0123456789abcdef";
@@ -64,6 +63,7 @@ int _puts(const char *x) {
     write(2, (x), strlen(x));
 }
 
+#include <sys/time.h>
 void set_timeout(int us) {
     if (us < 0) us = 100;
     struct itmr {
@@ -101,70 +101,14 @@ void register_signal(int sig, void *sighandler, void *restorer) {
     action.sa_restorer = restorer;
     sigaction(sig, (struct sigaction *) &action, NULL);
 }
-void sigreturn_wrap();
-asm ("sigreturn_wrap: mov sp, r0; swi #0x900077;");
-
-//syscalls
-asm("exit: push {lr}; swi #0x900001; pop {pc}\n");
-asm("fork: push {lr}; swi #0x900002; pop {pc}\n");
-asm("read: push {lr}; swi #0x900003; pop {pc}\n");
-asm("open: push {lr}; swi #0x900005; pop {pc}\n");
-asm("close: push {lr}; swi #0x900006; pop {pc}\n");
-asm("execve: push {lr}; swi #0x90000b; pop {pc}\n");
-asm("write: push {lr}; swi #0x900004; pop {pc}\n");
-asm("alarm: push {lr}; swi #0x90001b; pop {pc}\n");
-asm("setitimer: push {lr}; swi #0x900068; pop {pc}\n");
-asm("ioctl: push {lr}; swi #0x900036; pop {pc}\n");
-asm("dup2: push {lr}; swi #0x90003f; pop {pc}\n");
-asm("sigaction: push {lr}; swi #0x900043; pop {pc}\n");
-
-#include <poll.h>
-asm("poll: push {lr}; swi #0x9000a8; pop {pc}\n");
-
-#include <sys/socket.h>
-#include <netinet/in.h> 
-asm("socket: push {lr}; swi #0x900119; pop {pc}\n");
-asm("setsockopt: push {lr}; swi #0x900126; pop {pc}\n");
-asm("connect: push {lr}; swi #0x90011b; pop {pc}\n");
-#define htons(s) (((s>>8)&0xff) | ((s<<8)&0xff00))
 
 
-#include <sys/mman.h>
-struct mmap_arg_struct {
-    void *addr;
-    uint32_t len;
-    uint32_t prot;
-    uint32_t flags;
-    uint32_t fd;
-    uint32_t offset;
-};
-//void *mmap(void *addr, size_t len, int prot, int flags, int fildes, uint32_t off) {
-void *mmap(void *addr, size_t len, int prot, int flags, int fildes, off_t off) {
-    struct mmap_arg_struct arg;
-    void *ret;
-    arg.addr = addr;
-    arg.len = len;
-    arg.prot = prot;
-    arg.flags = flags;
-    arg.fd = fildes;
-    arg.offset = off;
-    asm("mov r0, %0; swi #0x90005a;mov %0, r0\n":"=r" (ret): "r" (&arg));
-
-    return ret;
-}
-//TARGET_PAGE_ALIGN set page size in qemu
-//print_var(mmap(0x4455004, 20, 3, 0x22, -1, 0));
-
+//Syscalls
+#include "syscalls.h"
 
 //exports from firmware
 extern void cont();
 extern struct saved_regs *saved_regs;
-
-////syscalls
-void exit(int status);
-//size_t read(int fildes, void *buf, size_t nbyte);
-//size_t write(int fildes, const void *buf, size_t nbyte);
-//unsigned alarm(unsigned seconds);
 
 
 /*
@@ -211,6 +155,7 @@ TCP connect
 */
 #include <netinet/tcp.h>
 #define IPaddr(a,b,c,d) (((a&0xff)<<0)|((b&0xff)<<8)|((c&0xff)<<16)|((d&0xff)<<24)) 
+#define htons(s) (((s>>8)&0xff) | ((s<<8)&0xff00))
 int tcp_connect(unsigned char a, unsigned char b, unsigned char c, unsigned char d, unsigned short port) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in addr;

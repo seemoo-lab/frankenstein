@@ -92,7 +92,6 @@ void add_lm_hooks() {
     trace(DHM_BasebandRx, 3, true);
     trace(lc_pageStart, 1, false);
 
-    bcs_add_hooks();
 }
 
 #endif

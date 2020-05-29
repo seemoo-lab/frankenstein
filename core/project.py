@@ -78,8 +78,8 @@ class Project:
             self.cfg["symbols"] = {}
             self.cfg["config"] = {}
             self.cfg["config"]["TOOLCHAIN"] = "arm-none-eabi-"
-            self.cfg["config"]["EMULATION_CFLAGS"] = "-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I ../common  -I /usr/include -D FRANKENSTEIN_EMULATION"
-            self.cfg["config"]["PATCH_CFLAGS"] = "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../common"
+            self.cfg["config"]["EMULATION_CFLAGS"] = "-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I ../../include  -I /usr/include -D FRANKENSTEIN_EMULATION"
+            self.cfg["config"]["PATCH_CFLAGS"] = "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../../include"
             self.cfg["config"]["EMULATION_CODE_BASE"] = 0xbeef000
             self.cfg["config"]["PATCH_CODE_BASE"] = 0xbeef000
             self.cfg["config"]["thumb_mode"] = True
@@ -642,7 +642,7 @@ class Project:
         sections_ld = ""
 
         #iterate over groups
-        for group in self.cfg["segment_groups"]:
+        for group in sorted(self.cfg["segment_groups"].keys()):
             #skip non active groups
             if not self.cfg["segment_groups"][group]["active"]:
                 continue
@@ -659,8 +659,8 @@ class Project:
                 sections_ld += "  .%s 0x%x:{ gen/%s/%s.segment.o} > %s\n" % (name, addr, group, name, name)
 
         #define where to put the actual code
-        sections_ld += "  .src.bss 0x%x:{ gen/src.o (.bss)}\n" %  (self.cfg["config"]["EMULATION_CODE_BASE"]-4096)
-        sections_ld += "  .src 0x%x:{ gen/src.o (*)}\n" %  self.cfg["config"]["EMULATION_CODE_BASE"]
+        sections_ld += "  .text 0x%x:{ gen/src.o (.text)}\n" %  self.cfg["config"]["EMULATION_CODE_BASE"]
+        sections_ld += "  .data ALIGN(LOADADDR(.text)+SIZEOF(.text), 0x1000):{ * (*)}\n"
 
         with open("%s/gen/segments.ld" % self.path, "w") as f:
             f.write("INCLUDE gen/symbols.ld;\n")
@@ -820,7 +820,7 @@ class Project:
             for group_name in self.cfg["segment_groups"]:
                 segments = self.cfg["segment_groups"][group_name]["segments"]
                 for segment_name in segments:
-                    print(self.cfg["segment_groups"][group_name]["segments"][segment_name])
+                    print(segment_name, self.cfg["segment_groups"][group_name]["segments"][segment_name])
 
             print()
 

@@ -51,7 +51,6 @@ void xmit_memory_emu(char *fname) {
 
 // Requires Stack to be in the elf file
 // Fix would be void _start(){ asm("ldr sp, =stack_end"); main(); }
-int saved_regs_emu;
 void xmit_state_emu(char *fname);
 asm("xmit_state_emu:"
     "push {r0-r12,lr}\n"
@@ -64,6 +63,8 @@ asm("xmit_state_emu:"
     "ldr sp, [r1]\n"
     "pop {r0-r12,lr}\n"
     "bx lr\n"
-    ".LTORG\n");
+    ".LTORG\n"
+    "saved_regs_emu:\n"
+    ".word");
 
 #endif

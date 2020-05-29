@@ -12,8 +12,8 @@ def run(cmd, stdin="", returncode=0):
     p = Popen(["bash", "-c", cmd], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stderr,stdout = p.communicate(stdin)
     if p.returncode != returncode:
-        print(stdout)
-        print(stderr)
+        print(stdout.decode("utf-8"))
+        print(stderr.decode("utf-8"))
         print("Command returned invalid return code.")
         print("Expected %d got %d" % (returncode, p.returncode))
         sys.exit(-1)
