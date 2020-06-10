@@ -1,7 +1,7 @@
 #include <frankenstein/hook.h>
 
 struct queue_access {
-    uint32_t thread;
+    void *thread;
     uint32_t queue;
     uint32_t lr;
 };

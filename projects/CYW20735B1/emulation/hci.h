@@ -4,11 +4,15 @@
 #include <frankenstein/BCMBT/hci.h>
 #include "common.h"
 
+extern uint32_t sr_ptu_status_adr4; //HCI UART status register
 
+void interruptvector_PTU(); //Interrupt handler
 
 
 //0x249f70 = g_uart_DriverState
 //print_var(*(char*)(0x249e58+429)); //rx state
+
+void *uart_ReceiveDMADoneInterrupt(uint32_t);
 
 
 
@@ -89,7 +93,7 @@ void hci_install_hooks() {
     patch_jump(uart_DirectWrite, &uart_DirectWrite_hook); //not required 
     patch_jump(uart_SendSynch, &uart_SendSynch_hook); //notr required
     //ret0 is needed to notify the state machine, that the data has been sent immediately
-    add_hook(uart_SendAsynch, &uart_SendAsynch_hook, ret0, NULL); //XXX Working
+    add_hook(uart_SendAsynch, &uart_SendAsynch_hook, (uint32_t (*)(uint32_t, void *))ret0, NULL); //XXX Working
 
     jump_trace(uart_DirectRead, uart_DirectRead_hook, 2, false);
 

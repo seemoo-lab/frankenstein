@@ -18,7 +18,7 @@ void hci_idle_loop() {
         hci_rx_poll(1);
         contextswitch();
 
-        if ((tb == 0x282250 || tb == 0x2822e0) && !coutdown--) { //GoTo HCI Fuzz Mode
+        if ((tb == &inqScanTaskStorage || tb == &pageScanTaskStorage) && !coutdown--) { //GoTo HCI Fuzz Mode
         //if (tb == 0x282250 && !coutdown--) { //GoTo HCI Fuzz Mode
             print("Enter HCI Redirect\n");
             char c = 0x42;

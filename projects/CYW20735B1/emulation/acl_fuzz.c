@@ -23,8 +23,6 @@ void _start() {
     patch_code();
     idle_loop = acl_idle_loop;
 
-    taskTimerList = &taskTimerList;
-    
     #ifdef DEBUG
         diag_sendLmpPktFlag = 0;
         hci_tx_fd = 1;

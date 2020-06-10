@@ -1,6 +1,16 @@
 #ifndef FWDEFS_H
 #define FWDEFS_H
 
+/*
+ _   _                          _ 
+ | | | |_ __  _   _ ___  ___  __| |
+ | | | | '_ \| | | / __|/ _ \/ _` |
+ | |_| | | | | |_| \__ \  __/ (_| |
+  \___/|_| |_|\__,_|___/\___|\__,_|
+
+This file is not used anymore and only tacked for completeness
+*?
+
 
 #ifdef EMULATED
     typedef uint16_t wiced_result_t;
@@ -88,11 +98,8 @@ void bthci_event_SendConnectionRequestEvent();
 /*
 Interrupt Vectors
 */
-void interruptvector_PTU(); //uart
 void interruptvector_DMA_DONE();
 void interruptvector_WAKEUP();
-void interruptvector_TIMER1_DONE();
-void interruptvector_TIMER2_DONE();
 
 
 extern int g_ptu_ISR;
@@ -124,15 +131,6 @@ void *uart_DirectRead();
 /*
     Hardware
 */
-extern int pkt_hdr_status; //Rx
-extern int pkt_log;
-
-extern int tx_pkt_info;
-extern int tx_pkt_pyld_hdr; //maybe acl header, length + 3 bits
-
-
-extern int pc_acscd_lo; //Piconet Access Code
-extern int pc_acscd_hi;
 
 extern int dc_fhout;
 extern int dc_ind_d_ptr;
@@ -163,36 +161,7 @@ int osapi_waitEvent(void *dvdn, int mask, int x);
 void interrupt_DisableInterrupts();
 void interrupt_EnableInterrupts();
 
-/*
-Timer
-*/
-struct osapi_timer {
-    void *next;
-    void *callback;
-    int maybe_type;
-    int i2;
-    void *mpaf_exec_timer_arg;
-    int i3;
-    uint32_t time_offset_low;
-    uint32_t time_offset_high;
-    int i6;
-    int i7;
-    char unknwn[];
-};
 
-void osapi_activateTimer(void *timer, uint32_t time_us);
-void osapi_getTimerRemain(void *timer);
-void *g_pmu_private_IdleMsgQueue;
-void mpaf_osapi_timerCb(void *timer);
-uint32_t clock_SystemTimeMicroseconds32();
-uint32_t clock_SystemTimeMicroseconds64();
-uint32_t clock_SystemTimeMicroseconds32_nolock();
-uint32_t clock_SystemTimeMicroseconds64_nolock();
-void clock_serviceTimers();
-void clock_ResetTimer2();
-
-extern struct osapi_timer *lm_osTimer;
-uint32_t timer1value; //current system time
 
 /*
 Connection
@@ -230,7 +199,6 @@ int lb;
 /*
 LMP
 */
-extern int diag_sendLmpPktFlag;
 void *rm_getACLConnPtr(int i);
 void *rm_getDHMAclPtr(int i);
 void *rm_allocateACLConnPtr(int i);
@@ -330,21 +298,8 @@ int btclk_GetSysClk_clk(void *);
 bcs
 */
 extern int bcsProfilingData;
-extern int pcx_btclk;
-extern int dc_nbtc_clk; //ca 1 unit pre 312us
-extern int dc_x_clk; //ca 1 unit pre 312us
-extern uint32_t *tb; //current task
-extern int taskTimerList;
-extern int slotCbEntryList;
 extern int btProgIntStatus;
-extern int taskTransientStateList;
-extern int taskActiveList;
-extern int taskReadyList;
 extern void *taskEventGroup;
-extern int phy_status;
-extern int sr_status;
-extern int sr_status_shadow;
-extern int phy_status_shadow;
 extern char rm_deviceInfo[];
 extern char rm_deviceLocalName[];
 void bcs_isrSlot11Int();
@@ -362,7 +317,6 @@ void bcs_dmaRxBufferRecycle(void *);
 void _dmaReqSend();
 void bcs_SlotCbFunctions();
 extern int dmacinttcclr;
-extern int rtx_dma_ctl;
 extern int dmacinttcstat;
 extern int g_dma_ActiveChannels;
 

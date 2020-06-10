@@ -2,6 +2,36 @@
 #define TIMER_H
 #include "bcs.h"
 
+/*
+Relevant interrupt vectors
+*/
+void interruptvector_TIMER1_DONE();
+void interruptvector_TIMER2_DONE();
+
+//current system time in us
+uint32_t timer1value;
+
+/*
+Timer struct
+*/
+
+struct osapi_timer {
+    void *next;
+    void *callback;
+    int maybe_type;
+    int i2;
+    void *mpaf_exec_timer_arg;
+    int i3;
+    uint32_t time_offset_low;
+    uint32_t time_offset_high;
+    int i6;
+    int i7;
+    char unknwn[];
+};
+
+//Linked list of timers
+extern struct osapi_timer *lm_osTimer;
+
 //dump osapi timers
 void show_timers() {
     return;
@@ -24,6 +54,8 @@ void show_timers() {
     }
     //bcs_info();
 }
+
+uint32_t clock_SystemTimeMicroseconds32_nolock();
 
 //hwo many us to wait unti next timer
 uint32_t next_timer_timestamp_us() {
@@ -57,7 +89,6 @@ void add_timer_hooks() {
     //trace(clock_SystemTimeMicroseconds64_nolock, 1, true);
     trace(clock_serviceTimers,2 ,false);
     trace(mpaf_thread_PostMsgToHandler, 2, false);
-    //trace(bcs_kernelTimerTick, 0 , false);
     trace(bcs_taskUnblock, 1, false);
 }
 

@@ -4,6 +4,9 @@
 #include "common.h"
 #include "queue.h"
 
+void inqfilter_init();
+void inqfilter_registerBdAddr(char bdaddr[6], int);
+
 
 void _start() {
     patch_code();

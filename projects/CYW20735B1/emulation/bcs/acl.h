@@ -1,9 +1,15 @@
+
+//This falg can bes set to extract LMP messages over HCI
+extern int diag_sendLmpPktFlag;
+
+//file descriptor for ACL messages
 int acl_fd = 0;
 
 #define ACL_ROLE_MASTER 0
 #define ACL_ROLE_SLAVE 1
 
-int acl_role = ACL_ROLE_SLAVE; //the snapshot I've taken had an open acl slave connection
+int acl_role = ACL_ROLE_SLAVE;
+//the snapshot I've taken had an open acl slave connection
 
 int injected = 0;
 

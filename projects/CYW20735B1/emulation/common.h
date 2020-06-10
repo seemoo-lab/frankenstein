@@ -14,7 +14,12 @@ int ret0() { return 0; }
 void die() {  print_caller(); print(" die();\n"); exit(-1);}
 void clean_exit() {  exit(0);}
 
-#include "fwdefs.h"
+extern void *g_pmu_idle_IdleThread; //We are here on idle
+extern void *g_bthci_lm_thread_Thread;
+extern void *g_mpaf_thread_cb;
+extern void *g_bthci_bttransport_Thread; //Name guessed
+
+//#include "fwdefs.h"
 #include "hci.h"
 #include "lm.h"
 #include "timer.h"
@@ -63,27 +68,25 @@ void msgqueue_Put_hook(struct saved_regs *regs, void *arg) {
 This
 */
 
-void print_thrd_bcmbt(uint32_t thrd) {
-    switch (thrd) {
-        case 0x249e58:
-            print("bttransport");
-            break;
 
-        case 0x20beb4:
-            print("lm");
-            break;
+void print_thrd_bcmbt(void *thrd) {
 
-        case 0x20a578:
-            print("idle");
-            break;
-
-        case 0x20a1fc:
-            print("mpaf")
-            break;
-
-        default:
-            print_ptr(_tx_thread_current_ptr);
+    if (thrd == &g_bthci_bttransport_Thread) {
+        print("bttransport");
     }
+    else if ( thrd == &g_bthci_lm_thread_Thread) {
+        print("lm");
+    }
+    else if (thrd == &g_pmu_idle_IdleThread) {
+        print("idle");
+    }
+    else if (thrd == &g_mpaf_thread_cb) {
+        print("mpaf")
+    }
+    else {
+        print_ptr(_tx_thread_current_ptr);
+    }
+
 }
 
 

@@ -54,6 +54,10 @@ def project_optparse(argv):
 
     (options, args) = parser.parse_args(argv)
 
+    if len(argv) == 1:
+        parser.print_help()
+        parser.error('No action taken')
+
     cfg = os.path.join(options.projectName, "project.json")
     if not os.path.isfile(cfg) and not options.projectCreate:
         parser.print_help()

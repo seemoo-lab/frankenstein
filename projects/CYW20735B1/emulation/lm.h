@@ -3,6 +3,12 @@
 #ifndef __LM_H
 #define __LM_H
 
+void lm_LmpBBAcked(void *);                             //called if sent packet is acked
+int DHM_isTxLmpListEmpty(void *adhm_acl);               //Returns true if there are no LMP packets left in LMP Tx lise
+void *DHM_getFrontTxLmp(void *adhm_acl);                //Get first LMP packet in Tx list
+void *rm_getConnFromBdAddress(char *);                  //Gets connection handle for BD address
+void lm_LmpReceived(void *acl_conn, void *lmp_msg);     //Called for every received LMP packet in LM thread
+
 
 struct lm_cmd {
     short type;
@@ -21,7 +27,7 @@ struct lcp_pckt {
 };
 
 void lm_hook(struct saved_regs *regs, void *arg) {
-    struct lm_cmd *lm_cmd = regs->r0;
+    struct lm_cmd *lm_cmd = (void *)regs->r0;
     struct lcp_pckt *lcp;
 
     //rssi report
