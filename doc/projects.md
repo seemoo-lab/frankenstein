@@ -100,7 +100,7 @@ Arm                                 | `dr pc, [pc, #-4]; .word target`      | 8
 ## Hooking Functions
 
 This hooking mechanism is used, if the original function has to be executed as well.
-It will save the original 12 bytes of the function prologue and then use [patch_return()](#replacing-functions) method described earlier.
+It will save the original 12 bytes of the function prologue and then use [patch_jump()](#replacing-functions) method described earlier.
 As the target function is called, a wrapper is executed, that will restore the function prologue and execute the supplied `pre_hook` function.
 Furthermore, the link register (`lr`) is set to jump to a pos hook logic, that is executed, as the function returns.
 This will execute `post_hook` and re-install the hook.
