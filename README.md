@@ -25,7 +25,7 @@ Table of Contents
     * [Custom Firmware States](#dumping-custom-states)
     * [Heap Sanitizer](#live-heap-sanitizer)
     * [Dependencies](#important-notes--dependencies)
-    * [Start your new project](doc/projects.md)
+    * [Start Your New Project](doc/projects.md)
 
  *  Vulnerabilities
     * [ThreadX Heap Exploitation](doc/heap.md)

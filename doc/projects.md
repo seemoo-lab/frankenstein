@@ -8,8 +8,10 @@ python3 cli.py project -p [Project Name] -c -e [ELF File]
 ```
 
 After this, you will have a directory `projects/[Project Name]` where all your files will live.
-Here you can also:
-- [write a Hello World](#hello-world)
+
+Table of Contents
+------------
+- [Write a Hello World](#hello-world)
 - [Trace functions](#trace-functions)
 - [Remove functions](#removing-functions)
 - [Replace functions](#replacing-functions)
@@ -60,7 +62,7 @@ trace(function_name, n_args, hasret);
 As soon the target function is executed a debug message is printed, that looks like the following:
 
 ```
-target_function(0xc0ffe){Stuff withinn target_function} = 0xbeef;
+target_function(0xc0ffe)[Output within target_function] = 0xbeef;
 ```
 
 ## Removing functions
@@ -91,9 +93,9 @@ patch_jump(src, dst);
 
 Architecture | Instruction  | Size
 -------------|--------------|------
-Arm Thumb (aligned function)        | `ldr pc, {pc}; .word target           | 8
-Arm Thumb (misaligned function)     | `nop; ldr pc, {pc}; .word target      | 10
-Arm                                 | `dr pc, [pc, #-4]; .word target       | 8
+Arm Thumb (aligned function)        | `ldr pc, {pc}; .word target`          | 8
+Arm Thumb (misaligned function)     | `nop; ldr pc, {pc}; .word target`     | 10
+Arm                                 | `dr pc, [pc, #-4]; .word target`      | 8
 
 ## Hooking Functions
 
