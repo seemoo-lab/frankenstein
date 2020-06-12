@@ -25,6 +25,7 @@ Table of Contents
     * [Custom Firmware States](#dumping-custom-states)
     * [Heap Sanitizer](#live-heap-sanitizer)
     * [Dependencies](#important-notes--dependencies)
+    * [Start your new project](doc/projects.md)
 
  *  Vulnerabilities
     * [ThreadX Heap Exploitation](doc/heap.md)
@@ -34,7 +35,6 @@ Table of Contents
     * [BlueFrag (CVE-2020-0022)](https://insinuator.net/2020/04/cve-2020-0022-an-android-8-0-9-0-bluetooth-zero-click-rce-bluefrag/) - Fixed in the Android February 2020 release. Look at our ACL [fuzzer](projects/CYW20735B1/patch/aclfuzz.c).
 
   * Miscellaneous
-    * [Project Structure](doc/projects.md)
     * Master [Thesis](doc/Thesis.pdf) by Jan Ruge
 
 
