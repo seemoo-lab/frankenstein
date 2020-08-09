@@ -1,0 +1,42 @@
+Frankenstein:
+    Add csv symbol import to WebUI and CLI
+
+    IDA import:
+        - Works ok-ish with symbols
+        - Segments seems to be buggy
+
+    Extract debuginfo from ELF
+        - Some vendors provide this
+        - Create HDR file with signatures structs etc.
+
+    Add symbol types to final ELF
+        - Would allow re-import to IDA
+        - patch_symbols.py already exists but is slow
+
+    Make CLI more complete
+        - Provide same functionality as WebUI
+        - Remove manage.py
+
+
+    Link firmware as .so and load it via dlopen
+        Pros:
+            - We can use libc and other libraries
+            - We can use argv
+            - Less compile time
+
+        Questions:
+            - Do we have -ldl with arm-none-eabi?
+            - Evaluate Cons
+
+
+Bluetooth firmware:
+    Track down invocation of uart_ReceiveDMADoneInterrupt !!!
+
+    Merge code for CYW20735B1 and CYW20819A1
+        - Remove all hardcoded addresses!
+
+
+    BCM4375B1
+        - Write heap docu
+        - Execute the snapshot
+        
