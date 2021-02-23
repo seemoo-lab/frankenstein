@@ -1,4 +1,4 @@
-EMULATION_CFLAGS=-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I ../../include  -I /usr/include -D FRANKENSTEIN_EMULATION
+EMULATION_CFLAGS=-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I gen -I ../../include  -I /usr/include -D FRANKENSTEIN_EMULATION
 EMULATION_CODE_BASE=0xbeef000
 PATCH_CFLAGS=-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../../include
 PATCH_CODE_BASE=0x271a00

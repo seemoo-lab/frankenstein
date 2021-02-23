@@ -87,8 +87,8 @@ class Project:
             self.cfg["symbols"] = {}
             self.cfg["config"] = {}
             self.cfg["config"]["TOOLCHAIN"] = "arm-none-eabi-"
-            self.cfg["config"]["EMULATION_CFLAGS"] = "-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include -I ../../include  -I /usr/include -D FRANKENSTEIN_EMULATION"
-            self.cfg["config"]["PATCH_CFLAGS"] = "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include  -I ../../include"
+            self.cfg["config"]["EMULATION_CFLAGS"] = "-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include  -I gen -I ../../include  -I /usr/include -D FRANKENSTEIN_EMULATION"
+            self.cfg["config"]["PATCH_CFLAGS"] = "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include-I gen -I ../../include"
             self.cfg["config"]["EMULATION_CODE_BASE"] = 0xbeef000
             self.cfg["config"]["PATCH_CODE_BASE"] = 0xbeef000
             self.cfg["config"]["thumb_mode"] = True
@@ -361,11 +361,14 @@ class Project:
             self.error("Could not get path for group %s" % (group))
             return False
 
-        for segment_name in self.cfg["segment_groups"][group]["segments"].keys():
+        for segment_name in list(self.cfg["segment_groups"][group]["segments"].keys()):
             self.delete_segment(group, segment_name)
 
         del self.cfg["segment_groups"][group]
-        os.rmdir(path)
+        try:
+            os.rmdir(path)
+        except:
+            self.error("Could not remove directory %s" % path)
         self.save()
 
         return True
@@ -492,7 +495,10 @@ class Project:
             return False
 
         del self.cfg["segment_groups"][group]["segments"][name]
-        os.unlink(path)
+        try:
+            os.unlink(path)
+        except:
+            self.error("Could not unlink %s" % path)
         self.save()
 
     def set_active_segment(self, group, name, value):
@@ -534,7 +540,7 @@ class Project:
     Symbols
     """
     def add_symbol(self, group, name, addr):
-        if name == "" or "$" in name:
+        if name == "" or "$" in name or "." in name:
             self.error("Invalid symbol name %s" % name)
             return False
 
@@ -618,37 +624,44 @@ class Project:
     Create build scripts
     """
     def create_build_scripts(self):
-        self.create_symbol_ldscript()
+        self.create_symbol_scripts()
         self.create_ldscripts()
         self.create_makefile()
         return True
 
-    def create_symbol_ldscript(self):
+    def create_symbol_scripts(self):
         symbols_defined = {}
-        with open("%s/gen/symbols.ld" % self.path, "w") as f:
-            #Symbols for active groups
-            for group in sorted(self.cfg["segment_groups"].keys()):
-                #skip non active groups
-                if not self.cfg["segment_groups"][group]["active"]:
-                    continue
+        ld = open("%s/gen/symbols.ld" % self.path, "w")
+        h = open("%s/gen/frankenstein_config.h" % self.path, "w")
 
-                symbols = self.cfg["segment_groups"][group]["symbols"]
-                for name in sorted(symbols.keys()):
-                    addr = symbols[name]
-                    if name not in symbols_defined:
-                        f.write("%s = 0x%x;\n" % (name, addr))
-                        symbols_defined[name] = group
-                    else:
-                        self.error("Symbol %s in group %s already defined in group %s" % (name, group, symbols_defined[name]))
+        #Symbols for active groups
+        for group in sorted(self.cfg["segment_groups"].keys()):
+            #skip non active groups
+            if not self.cfg["segment_groups"][group]["active"]:
+                continue
 
-            #Global Symbols
-            for name in sorted(self.cfg["symbols"].keys()):
-                addr = self.cfg["symbols"][name]
+            symbols = self.cfg["segment_groups"][group]["symbols"]
+            for name in sorted(symbols.keys()):
+                addr = symbols[name]
                 if name not in symbols_defined:
-                    f.write("%s = 0x%x;\n" % (name, addr))
-                    symbols_defined[name] = "global"
+                    ld.write("%s = 0x%x;\n" % (name, addr))
+                    h.write("#define FRANKENSTEIN_HAVE_%s\n" % name)
+                    symbols_defined[name] = group
                 else:
-                    self.error("Symbol %s in global already defined in group %s" % (name, symbols_defined[name]))
+                    self.error("Symbol %s in group %s already defined in group %s" % (name, group, symbols_defined[name]))
+
+        #Global Symbols
+        for name in sorted(self.cfg["symbols"].keys()):
+            addr = self.cfg["symbols"][name]
+            if name not in symbols_defined:
+                ld.write("%s = 0x%x;\n" % (name, addr))
+                h.write("#define FRANKENSTEIN_HAVE_%s\n" % name)
+                symbols_defined[name] = "global"
+            else:
+                self.error("Symbol %s in global already defined in group %s" % (name, symbols_defined[name]))
+
+        ld.close()
+        h.close()
 
     def create_ldscripts(self):
         memory_ld = ""

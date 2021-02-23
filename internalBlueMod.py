@@ -1,12 +1,12 @@
-import internalblue.cmds
-from internalblue.cmds import log, auto_int
+import sys
+import cmd2
 import internalblue.cli
 import internalblue.hci as hci
+from internalblue.utils import yesno
 import argparse
 import traceback
 from elftools.elf import elffile
 from elftools.elf.constants import SH_FLAGS
-from pwn import *
 
 from datetime import datetime
 import struct
@@ -20,14 +20,41 @@ from core.project import Project
 
 symbols = {}
 
-CmdLoadELFInitialized = False
-class CmdLoadELF(internalblue.cmds.Cmd):
-    keywords = ["loadelf"]
-    description = "Loads an ELF file to device and executes entry point"
+class frankensteinCLI(internalblue.cli.InternalBlueCLI):
+    def __init__(self, main_args):
+        super().__init__(main_args)
 
-    parser = argparse.ArgumentParser(prog=keywords[0], description=description)
+        if self.internalblue.fw.FW_NAME == "CYW20735B1":
+            self.internalblue.patchRom(0x3d32e, b"\x70\x47\x70\x47")
+        elif self.internalblue.fw.FW_NAME == "CYW20819A1":
+            self.internalblue.patchRom(0x2330e, b"\x70\x47\x70\x47")
+        self.internalblue.registerHciCallback(self.debug_hci_callback)
+        self.internalblue.registerHciCallback(self.map_memory_hci_callback)
+        self.internalblue.registerHciCallback(self.xmit_state_hci_callback)
 
-    parser.add_argument("fname", help="ELF file to load")
+    """
+        Print info messages emitted from the firmware
+    """
+    def debug_hci_callback(self, record):
+        hcipkt = record[0]
+        if not issubclass(hcipkt.__class__, hci.HCI_Event):
+            return
+
+        #We use event code 0xfe for info text messages
+        #Buffer messages until a newline is found
+        if hcipkt.event_code == 0xfe:
+            self.msg += hcipkt.data.decode("utf-8")
+            while "\n" in self.msg:
+                msg_split = self.msg.split("\n")
+                self.logger.info("Firmware says: %s" % msg_split[0])
+                self.msg = "\n".join(msg_split[1:])
+
+        #We use event code 0xfd for data
+        if hcipkt.event_code == 0xfd:
+            self.logger.info("Firmware says: %s" % hexlify(hcipkt.data))
+
+        return
+
 
     msg = ""
 
@@ -37,12 +64,14 @@ class CmdLoadELF(internalblue.cmds.Cmd):
         Executes entry point of ELF on behalf
     """
     def load_ELF(self, fname):
+        "Loads an ELF file to device and executes entry point"
+
         try:
             fd = open(fname, "rb")
             self.elf = elffile.ELFFile(fd)
         except:
             traceback.print_exc()
-            log.warn("Could not parse ELF file...")
+            self.logger.warn("Could not parse ELF file...")
             return False
 
         if "_fini" in symbols:
@@ -64,7 +93,7 @@ class CmdLoadELF(internalblue.cmds.Cmd):
                 else:
                     data = section.data()
 
-                log.info("Loading %s @ 0x%x - 0x%x (%d bytes)" % (name, addr, addr+len(data), len(data)))
+                self.logger.info("Loading %s @ 0x%x - 0x%x (%d bytes)" % (name, addr, addr+len(data), len(data)))
                 #write section data to device
                 self.writeMem(addr, data)
 
@@ -79,53 +108,26 @@ class CmdLoadELF(internalblue.cmds.Cmd):
                     if symbol.name != "" and "$" not in symbol.name:
                         symbols[symbol.name] =  symbol.entry["st_value"]
                         n += 1
-        log.info("Loaded %d symbols" % n)
+        self.logger.info("Loaded %d symbols" % n)
 
         return self.elf.header.e_entry
-
-    """
-        Print info messages emitted from the firmware
-    """
-    def debug_hci_callback(self, record):
-        hcipkt = record[0]
-        if not issubclass(hcipkt.__class__, hci.HCI_Event):
-            return
-
-        #We use event code 0xfe for info text messages
-        #Buffer messages until a newline is found
-        if hcipkt.event_code == 0xfe:
-            self.msg += hcipkt.data.decode("utf-8")
-            while "\n" in self.msg:
-                msg_split = self.msg.split("\n")
-                log.info("Firmware says: %s" % msg_split[0])
-                self.msg = "\n".join(msg_split[1:])
-
-        #We use event code 0xfd for data
-        if hcipkt.event_code == 0xfd:
-            log.info("Firmware says: %s" % hexlify(hcipkt.data))
-
-        return
 
 
 
     """
     Command implementation
     """
-    def work(self):
-        args = self.getArgs()
+    description = "Loads an ELF file to device and executes entry point"
+    loadelf_parser = argparse.ArgumentParser(description=description)
+    loadelf_parser.add_argument("fname", help="ELF file to load")
+
+    @cmd2.with_argparser(loadelf_parser)
+    def do_loadelf(self, args):
         if args == None:
-            return True
-
-        global CmdLoadELFInitialized
-        if not CmdLoadELFInitialized:
-            if self.internalblue.fw.FW_NAME == "CYW20735B1":
-                self.internalblue.patchRom(0x3d32e, b"\x70\x47\x70\x47")
-            self.internalblue.registerHciCallback(self.debug_hci_callback)
-            CmdLoadELFInitialized = True
-
+            return False
 
         if not os.path.exists(args.fname):
-            log.warn("Could not find file %s" % args.fname)
+            self.logger.warn("Could not find file %s" % args.fname)
             return False
 
         entry = self.load_ELF(args.fname)
@@ -135,20 +137,8 @@ class CmdLoadELF(internalblue.cmds.Cmd):
             if yesno("Found nonzero entry point 0x%x. Execute?" % entry):
                 self.launchRam(entry-1)
 
-        return entry != False
+        return False
 
-internalblue.cmds.CmdLoadELF = CmdLoadELF
-
-CmdMapMemoryInitialized = False
-class CmdMapMemory(CmdLoadELF):
-    keywords = ["mapmemory"]
-    description = "Loads an ELF file to device and executes entry point"
-
-    parser = argparse.ArgumentParser(prog=keywords[0], description=description)
-
-    parser.add_argument("start", help="Start address for mapping", type=auto_int)
-
-    watchdog = None
 
     """
     Map memory events
@@ -186,28 +176,24 @@ class CmdMapMemory(CmdLoadELF):
             self.watchdog.start()
 
     def watchdog_handle(self):
-        log.warn("Firmware died at address 0x%x while mapping memory" % (self.last_addr&0xfffffffe))
+        self.logger.warn("Firmware died at address 0x%x while mapping memory" % (self.last_addr&0xfffffffe))
 
     """
     Command implementation
     """
-    def work(self):
-        args = self.getArgs()
+    description = "Loads an ELF file to device and executes entry point"
+    mapmemory_parser = argparse.ArgumentParser(description=description)
+    mapmemory_parser.add_argument("start", help="Start address for mapping", type=internalblue.cli.auto_int)
+    watchdog = None
+
+    @cmd2.with_argparser(mapmemory_parser)
+    def do_mapmemory(self, args):
         if args == None:
-            return True
-
-        global CmdMapMemoryInitialized
-        if not CmdMapMemoryInitialized:
-            if self.internalblue.fw.FW_NAME == "CYW20735B1":
-                self.internalblue.patchRom(0x3d32e, "\x70\x47\x70\x47")
-            self.internalblue.registerHciCallback(self.map_memory_hci_callback)
-            self.internalblue.registerHciCallback(self.debug_hci_callback)
-            CmdMapMemoryInitialized = True
-
+            return False
 
         patch = "projects/%s/gen/map_memory.patch" % self.internalblue.fw.FW_NAME
         if not os.path.exists(patch):
-            log.warn("Could not find file %s" % patch)
+            self.logger.warn("Could not find file %s" % patch)
             return False
 
         entry = self.load_ELF(patch)
@@ -218,18 +204,9 @@ class CmdMapMemory(CmdLoadELF):
 
         self.launchRam(entry-1)
 
-        return entry != False
+        return False
 
-internalblue.cmds.CmdMapMemory = CmdMapMemory
 
-CmdXmitStateInitialized = False
-class CmdXmitState(CmdLoadELF):
-    keywords = ["xmitstate"]
-    description = "Sets a hook on a function, emmits an executable state and add the dump to frankenstein"
-
-    parser = argparse.ArgumentParser(prog=keywords[0], description=description)
-
-    parser.add_argument("target", help="Target function", type=auto_int)
 
     """
     Receive state dump
@@ -243,7 +220,7 @@ class CmdXmitState(CmdLoadELF):
         if hcipkt.event_code == 0xfc:
             saved_regs, cont = struct.unpack("II", hcipkt.data[:8])
             if cont != 0:
-                log.info("Receiving firmware state: regs@0x%x cont@0x%x" % (saved_regs, cont))
+                self.logger.info("Receiving firmware state: regs@0x%x cont@0x%x" % (saved_regs, cont))
                 self.segment_data = []
                 self.segments = {}
                 self.succsess = True
@@ -253,7 +230,7 @@ class CmdXmitState(CmdLoadELF):
             else:
                 if not self.succsess:
                     return
-                log.info("Received fuill firmware state")
+                self.logger.info("Received fuill firmware state")
 
                 groupName = datetime.now().strftime("internalBlue_%m.%d.%Y_%H.%M.%S")
                 self.project = Project("projects/"+self.internalblue.fw.FW_NAME)
@@ -266,7 +243,7 @@ class CmdXmitState(CmdLoadELF):
                 self.project.add_symbol(groupName, "set_int", symbols["set_int"])
                 self.project.add_symbol(groupName, "saved_regs", self.saved_regs)
                 for segment_addr in self.segments:
-                    self.project.add_segment(groupName, "", segment_addr, "".join(self.segments[segment_addr]))
+                    self.project.add_segment(groupName, "", segment_addr, b"".join(self.segments[segment_addr]))
 
                 self.project.save()
 
@@ -278,49 +255,36 @@ class CmdXmitState(CmdLoadELF):
             if segment_addr + len(self.segment_data)*128 != current + 128:
                 if self.succsess:
                     print( hex(segment_addr), hex(len(self.segment_data)*128), hex( current + 128))
-                    log.info("Failed to receive state")
+                    self.logger.info("Failed to receive state")
                 self.succsess = False
                 
             #Fully received memory dumo
             if len(self.segment_data)*128 == size:
-                log.info("Received segment 0x%x - 0x%x" % (segment_addr, segment_addr+size))
+                self.logger.info("Received segment 0x%x - 0x%x" % (segment_addr, segment_addr+size))
                 self.segments[segment_addr] = self.segment_data
                 self.segment_data = []
 
     """
     Command implementation
     """
-    def work(self):
-        args = self.getArgs()
+    description = "Sets a hook on a function, emmits an executable state and add the dump to frankenstein"
+    xmitstate_parser = argparse.ArgumentParser(description=description)
+    xmitstate_parser.add_argument("target", help="Target function", type=internalblue.cli.auto_int)
+
+    @cmd2.with_argparser(xmitstate_parser)
+    def do_xmitstate(self, args):
         if not args:
-            return True
-
-        # Initialize callbacks for xmitstate
-        global CmdXmitStateInitialized
-
-        if not CmdXmitStateInitialized:
-
-            # disable uart_SetRTSMode if we know its location
-            if self.internalblue.fw.FW_NAME == "CYW20735B1":
-                self.internalblue.patchRom(0x3d32e, b"\x70\x47\x70\x47")
-            elif self.internalblue.fw.FW_NAME == "CYW20819A1":
-                self.internalblue.patchRom(0x2330e, b"\x70\x47\x70\x47")
-
-            # and now let's enable the callbacks
-            self.internalblue.registerHciCallback(self.debug_hci_callback)
-            self.internalblue.registerHciCallback(self.xmit_state_hci_callback)
-            CmdXmitStateInitialized = True
-
+            return False
 
         patch = "projects/%s/gen/xmit_state.patch" % self.internalblue.fw.FW_NAME
         print(patch)
         if not os.path.exists(patch):
-            log.warn("Could not find file %s" % patch)
+            self.logger.warn("Could not find file %s" % patch)
             return False
 
         entry = self.load_ELF(patch)
         if entry == False:
-            log.warn("Failed to load patch ELF %s" % patch)
+            self.logger.warn("Failed to load patch ELF %s" % patch)
             return False
 
         target = struct.pack("I", args.target | 1)
@@ -328,10 +292,9 @@ class CmdXmitState(CmdLoadELF):
 
         self.launchRam(entry-1)
 
-        return entry != False
-
-internalblue.cmds.CmdXmitState = CmdXmitState
-
+        return False
 
 if __name__ == "__main__":
-    internalblue.cli.internalblue_cli(sys.argv[1:])
+    arg, unknown_args = internalblue.cli.parse_args()
+    frankensteinCLI(arg).cmdloop()
+

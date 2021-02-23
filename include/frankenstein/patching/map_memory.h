@@ -49,7 +49,6 @@ void map_memory() {
     write_code(0x14, handler|1); //bus fault
     write_code(0x18, handler|1); //usage_fault
 
-    //for(int i = 0; i < 32; i++) write_code(0x18+i*4, handler|1);
 
     hci_xmit_map_report(0xffffffff); //signal start
     map_memory_main(map_memory_start);

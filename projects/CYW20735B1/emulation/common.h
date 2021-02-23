@@ -134,6 +134,7 @@ void patch_code() {
 
     //Relplace return from interrupt addr with exit
     idle_loop = clean_exit;
+    *((void **)0x02003d4) = clean_exit; //Here is an alternative return from interrupt... XXX
 
     //Watchdog HW Reset
     patch_jump(wdog_generate_hw_reset, &die);
@@ -165,6 +166,12 @@ void patch_code() {
 
     patch_return(pmu_sds_ReadSnappedClocks);
     patch_return(bcs_pmuSleepEnable);
+
+    #ifdef FRANKENSTEIN_HAVE_get_int
+        patch_return(get_int);
+        patch_return(set_int);
+    #endif
+
 }
 
 #endif
