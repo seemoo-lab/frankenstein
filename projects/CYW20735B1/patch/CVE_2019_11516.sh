@@ -8,7 +8,10 @@ systemctl restart bluetooth.service
 hciconfig $1 up
 hciconfig $1 iscan
 
-echo "Inquiry Scan running, hit return to run heap-spray"
+echo "Eval board is now visible and will respond with the EIR (Inquiry Scan)."
+echo "Search now for BT devices on the target."
+echo "If a device called 'Eval' appears the heap should be corrupted on the target controller."
+echo "Then hit return to run heap-spray"
 read
 hciconfig $1 noscan
 
