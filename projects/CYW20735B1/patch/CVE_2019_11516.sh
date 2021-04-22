@@ -1,3 +1,9 @@
+if [ $# -lt 2 ]
+then
+    echo "usage: $0 hci0 <target address>"
+    exit 1
+fi
+
 systemctl restart bluetooth.service
 hciconfig $1 up
 hciconfig $1 iscan
