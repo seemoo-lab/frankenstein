@@ -43,7 +43,10 @@ class frankensteinCLI(internalblue.cli.InternalBlueCLI):
         #We use event code 0xfe for info text messages
         #Buffer messages until a newline is found
         if hcipkt.event_code == 0xfe:
-            self.msg += hcipkt.data.decode("utf-8")
+            try:
+                self.msg += hcipkt.data.decode("utf-8")
+            except:
+                self.logger.info("Could not read message from firmware.")
             while "\n" in self.msg:
                 msg_split = self.msg.split("\n")
                 self.logger.info("Firmware says: %s" % msg_split[0])

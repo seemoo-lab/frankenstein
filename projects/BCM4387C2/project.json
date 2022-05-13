@@ -3,7 +3,7 @@
         "EMULATION_CFLAGS": "-c -static -fpic -pie -nostdlib -g -Ttext $(EMULATION_CODE_BASE) -I include  -I gen -I ../../include  -I /usr/include -D FRANKENSTEIN_EMULATION",
         "EMULATION_CODE_BASE": 200208384,
         "PATCH_CFLAGS": "-O2 -static -nostdlib -Tgen/patch.ld -mcpu=cortex-m4 -I include -I gen -I ../../include",
-        "PATCH_CODE_BASE": 200208384,
+        "PATCH_CODE_BASE": 2326772,
         "TOOLCHAIN": "arm-none-eabi-",
         "thumb_mode": true
     },
@@ -2975,6 +2975,7 @@
         "bthci_event_AllocateEventAndFillHeaderOrNull": 826000,
         "bthci_event_AllocateEventAndFillHeader_unpatched": 826056,
         "bthci_event_AttemptToEnqueueEventToTransport": 825804,
+        "bthci_event_SendCommandCompleteEventWithStatus": 825884,
         "bthci_event_SendCommandStatusEventWithStatus": 826096,
         "bthci_event_Send_0x62_CommandCompleteEvent": 2874252,
         "bthci_event_Send_0x62_CommandCompleteEvent_2": 2874312,
