@@ -1,0 +1,8 @@
+asgiref==3.6.0
+backports.zoneinfo==0.2.1
+capstone==4.0.2
+Django==1.11.24
+pyelftools==0.24
+pytz==2022.7
+sqlparse==0.4.3
+unicorn==2.0.1.post1

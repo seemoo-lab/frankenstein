@@ -47,7 +47,10 @@ The Makefile and linker scripts are generated automatically by the build system.
 The build system can be launched by the following command and navigating the browser to [http://127.0.0.1:8000/](http://127.0.0.1:8000)
 
 
-    python3 manage.py runserver
+```
+pip install -r requirements.txt
+python3 manage.py runserver
+```
 
 
 

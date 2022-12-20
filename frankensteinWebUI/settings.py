@@ -25,7 +25,7 @@ SECRET_KEY = 'w3a!zu0f85+3sv_2+&!f(p&g3$b2fj9j4##&4qzy0zd_l^03i6'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 DATA_UPLOAD_MAX_MEMORY_SIZE = 64*1024*1024
 
 
